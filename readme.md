@@ -49,7 +49,7 @@ a dashboard of most needed info
 * important RF2 telemetry 
 * important elrs telemetry
 
-![alt text](image-4.png)
+![alt text](docs/img/image-4.png)
 
 ## Requieremns
 * Rotorflight 2.1.x and above
