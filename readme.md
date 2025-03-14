@@ -51,7 +51,7 @@ a dashboard of most needed info
 
 ![alt text](docs/img/image-4.png)
 
-planned additions:
+planned additions to dashboard:
 - esc temp
 - elrs information
 - min/max after flight
