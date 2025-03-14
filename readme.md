@@ -51,7 +51,16 @@ a dashboard of most needed info
 
 ![alt text](docs/img/image-4.png)
 
-## Requieremns
+planned additions:
+- esc temp
+- elrs information
+- min/max after flight
+
+---
+<br><br><br>
+
+
+# Requieremns
 * Rotorflight 2.1.x and above
 * edgeTx 2.10.x (currently, but will be deprecated soon)
 * edgeTx 2.11.x
