@@ -1,0 +1,32 @@
+
+arm/disarm +disarm reasons
+rpm
+cell voltage, pack voltage
+current, curr+
+capacity?
+craft name
+v - blackbox fill level
+RQLY + RQLY min (if elrs)
+VFR + VFR min (if access, or accst-UNI)
+esc temp
+
+profile id
+rate id
+
+image?
+governor mode (if gov enabled)
+governor expected rpm? (if gov enabled)
+rescue enabled?
+
+timer
+
+flight count
+
+
+
+secod screen
+pid of all 6 banks
+rate of 6 banks
+
+
+
