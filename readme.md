@@ -1,4 +1,4 @@
-# Rotorflight Suite for EdgeTx
+# Rotorflight Suite of LUA scripts for EdgeTx
 
 rotorflight2 suite for edgeTx
 
