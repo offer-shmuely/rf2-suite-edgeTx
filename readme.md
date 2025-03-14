@@ -9,7 +9,7 @@ I hope others will find it as useful as I do
 
 ## RF2_touch - configuration lua script
 
-![alt text](image.png)
+![alt text](docs/img/image.png)
 
 # Widgets
 
@@ -25,7 +25,7 @@ background communication widget
 
 So, no need to define any scripts in special-function or custom-script anymore.
 
-![alt text](image-1.png)
+![alt text](docs/img/image-1.png)
 
 
 ## rf2_name
