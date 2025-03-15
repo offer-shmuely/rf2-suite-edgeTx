@@ -225,12 +225,16 @@ local function refresh(wgt, event, touchState)
     -- capacity
     x, y = 5, 140
     local capaTotal = rf2fc.msp.cache.mspBatteryConfig.batteryCapacity or -1
-    local capaUsed
-    if wgt.options.useTelemetry == 1 then
-        capaUsed = getValue("Capa")
-    else
-        capaUsed = math.floor(capaTotal / 2)
-    end
+    local capaUsed = getValue("Capa")
+    -- if wgt.options.useTelemetry == 1 then
+    --     capaUsed = getValue("Capa")
+    -- else
+    --     if isSimu then
+    --         capaUsed = math.floor(capaTotal / 2) or 0
+    --     else
+    --         capaUsed = 0
+    --     end
+    -- end
     local capaPercent = math.floor(100 * capaUsed / capaTotal)
 
     lcd.drawText(x, y -12, string.format("Capacity (Total: %s)", capaTotal), FS.FONT_6 + WHITE)
@@ -324,18 +328,18 @@ local function refresh(wgt, event, touchState)
     end
 
 
-    x,y = 440,10
-    lcd.drawFilledRectangle(x,y, 5,170, GREEN)
-    lcd.drawFilledRectangle(x+25,y, 6,170, GREEN)
-    lcd.drawText(x, y+170,"TP", FS.FONT_6 + WHITE)
-    lcd.drawText(x+25, y+170,"RQ", FS.FONT_6 + WHITE)
-    -- lcd.drawText(x+5, y+195,"80%", FS.FONT_8 + WHITE + BOLD)
+    -- x,y = 440,10
+    -- lcd.drawFilledRectangle(x,y, 5,170, GREEN)
+    -- lcd.drawFilledRectangle(x+25,y, 6,170, GREEN)
+    -- lcd.drawText(x, y+170,"TP", FS.FONT_6 + WHITE)
+    -- lcd.drawText(x+25, y+170,"RQ", FS.FONT_6 + WHITE)
+    -- -- lcd.drawText(x+5, y+195,"80%", FS.FONT_8 + WHITE + BOLD)
 
-    lcd.drawText(x+0, y+180,"TPwr", FS.FONT_6 + GREY)
-    lcd.drawText(x+0, y+195,"500mw", FS.FONT_6 + WHITE)
-    -- lcd.drawArc(200, 260, 80, -80, 80, BLUE + DOTTED)
+    -- lcd.drawText(x+0, y+180,"TPwr", FS.FONT_6 + GREY)
+    -- lcd.drawText(x+0, y+195,"500mw", FS.FONT_6 + WHITE)
+    -- -- lcd.drawArc(200, 260, 80, -80, 80, BLUE + DOTTED)
 
-   dbgLayout()
+--    dbgLayout()
 end
 
 return {name=app_name, options=options, translate=translate, create=create, update=update, background=background, refresh=refresh}

@@ -95,12 +95,17 @@ function M.armSwitchOn()
         return nil
     end
 
-    for i = 0, 25 do
+    for i = 0, 24 do
         if bit32.band(flags, bit32.lshift(1, i)) ~= 0 then
-            if i == 25 then return true end
+            return false
         end
     end
-    return false
+
+    if bit32.band(flags, bit32.lshift(1, 25)) == 1 then
+        return false
+    end
+
+    return true
 end
 
 return M
