@@ -31,9 +31,6 @@ function M.buildSpecialFields(libGUI, panel, Page, y, updateValueChange)
             local y = y + (row-1)*row_h
             local i = (col-1)*4 + row
             local f = Page.fields[i]
-            -- if runningInSimulator and f.label == nil then
-            --     f.value = Page.simulatorResponse[i]
-            -- end
 
             libGUI.newControl.ctl_rf2_button_number(panel,  "rates-"..col.."-"..row, {
                 x=x+1, y=y+1, w=col_w-2, h=row_h-2,

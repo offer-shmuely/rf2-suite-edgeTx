@@ -1,5 +1,5 @@
 local scripts = {
-    "/SCRIPTS/FUNCTIONS/rf2bg.lua",
+    -- "/SCRIPTS/FUNCTIONS/rf2bg.lua",
     "/SCRIPTS/RF2/COMPILE/compile.lua",
     "/SCRIPTS/RF2/CONFIRM/acc_cal.lua",
     "/SCRIPTS/RF2/MSP/common.lua",
@@ -65,7 +65,7 @@ local scripts = {
     "/SCRIPTS/RF2/tool.lua",
     "/SCRIPTS/RF2/ui.lua",
     "/SCRIPTS/RF2/ui_init.lua",
-    "/SCRIPTS/TOOLS/rf2.lua",
+    --"/SCRIPTS/TOOLS/rf2.lua",
 
 
     "/SCRIPTS/RF2_touch/touch/fields_info.lua",

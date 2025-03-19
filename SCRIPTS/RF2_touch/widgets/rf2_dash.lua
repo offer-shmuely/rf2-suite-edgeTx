@@ -225,7 +225,7 @@ local function refresh(wgt, event, touchState)
     -- capacity
     x, y = 5, 140
     local capaTotal = rf2fc.msp.cache.mspBatteryConfig.batteryCapacity or -1
-    local capaUsed = getValue("Capa")
+    local capaUsed = getValue("Capa") or 0
     -- if wgt.options.useTelemetry == 1 then
     --     capaUsed = getValue("Capa")
     -- else
@@ -235,7 +235,13 @@ local function refresh(wgt, event, touchState)
     --         capaUsed = 0
     --     end
     -- end
+    if capaTotal == nil or capaTotal == nan or capaTotal ==0 then
+        capaTotal = -1
+        capaUsed = 0
+    end
+
     local capaPercent = math.floor(100 * capaUsed / capaTotal)
+    -- rf2.log("capacity capaPercent: %s, Total: %s", capaPercent, capaTotal)
 
     lcd.drawText(x, y -12, string.format("Capacity (Total: %s)", capaTotal), FS.FONT_6 + WHITE)
     drawBlackboxHorz(wgt, {x=x, y=y+5,w=110,h=35,segments_w=20, color=WHITE, bg_color=GREY, cath_w=10, cath_h=30, segments_h=20, cath=false}, capaPercent)
@@ -310,9 +316,9 @@ local function refresh(wgt, event, touchState)
     if flagList ~= nil then
         log("disableFlags len: %s", #flagList)
         if (#flagList == 0) then
-            lcd.drawText(x, y,"ARM", FS.FONT_12 + RED)
+            -- lcd.drawText(x, y,"ARM", FS.FONT_12 + RED)
         else
-            lcd.drawText(x, y,"Not Arm", FS.FONT_12 + RED)
+            -- lcd.drawText(x, y,"Not Arm", FS.FONT_12 + RED)
             y = y + 30
             for i in pairs(flagList) do
                 log("disableFlags: %s", i)

@@ -249,7 +249,7 @@ local RFSensors_by_pos = {}
 local RFSensors_by_sid = {}
 
 for pos, sensor in pairs(RFSensors3) do
-    rf2.log("RFSensors: %d. %s: %s", sensor.id, sensor.sid, sensor.name)
+    -- rf2.log("RFSensors: %d. %s: %s", sensor.id, sensor.sid, sensor.name)
     RFSensors_by_pos[sensor.id] = sensor
     if sensor.sid ~= nil then
         RFSensors_by_sid[sensor.sid] = sensor

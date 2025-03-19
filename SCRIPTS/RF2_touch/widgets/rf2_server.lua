@@ -18,6 +18,7 @@ rf2fc = {
         cache = {
             mspName = nil,
             mspStatus = {
+                flightModeFlags = nil,
                 realTimeLoad = nil,
                 cpuLoad = nil,
                 armingDisableFlags = nil,
@@ -92,7 +93,7 @@ loadScript(baseDir .. "rf2.lua")()
 rf2.enable_serial_debug = true
 
 
-local image_file = rf2.baseDir .. "/widgets/rf2_logo2.png"
+local image_file = rf2.baseDir .. "/widgets/img/rf2_logo2.png"
 
 --------------------------------------------------------------
 local function log(fmt, ...)
@@ -262,6 +263,7 @@ local function state_RETRIVE_PERMANENT_INFO_INIT(wgt)
         rf2fc.msp.ctl.mspRescueProfile = true
     end)
 
+    reqTS = rf2.clock()
     state = STATE.RETRIVE_PERMANENT_INFO
 end
 
@@ -282,6 +284,11 @@ local function state_RETRIVE_PERMANENT_INFO(wgt)
         rf2fc.msp.ctl.msp_rx_request = false
         log("msp_rx_request: %s", rf2fc.msp.ctl.msp_rx_request)
         state = STATE.RETRIVE_LIVE_INFO_INIT
+    end
+
+    if (rf2.clock() - reqTS) > 10 then
+        log("hang, read again...")
+        state = STATE.RETRIVE_PERMANENT_INFO_INIT
     end
 
 end
@@ -344,7 +351,7 @@ local function state_RETRIVE_LIVE_INFO_INIT(wgt)
         rf2fc.msp.ctl.mspBatteryState = true
     end)
 
-
+    reqTS = rf2.clock()
     state = STATE.RETRIVE_LIVE_INFO
 end
 
@@ -358,6 +365,11 @@ local function state_RETRIVE_LIVE_INFO(wgt)
         rf2fc.msp.ctl.msp_rx_request = false
         -- log("msp_rx_request: %s", rf2fc.msp.ctl.msp_rx_request)
         state = STATE.DONE_INIT
+    end
+
+    if (rf2.clock() - reqTS) > 10 then
+        log("hang, read again...")
+        state = STATE.RETRIVE_LIVE_INFO_INIT
     end
 
 end
@@ -387,7 +399,6 @@ local function background(wgt)
     if (rf2.clock() - rf2fc.msp.ctl.lastUpdateTime) > 10 then
         rf2fc.msp.ctl.connected = false
     end
-
 
     wgt.is_telem = wgt.tools.isTelemetryAvailable()
     if wgt.is_telem == false then
@@ -462,10 +473,8 @@ local function refresh(wgt)
 
     if isOnTop then
         lcd.drawBitmap(wgt.img, 0, 0)
-
         -- lcd.drawText(0, 0, "RF", FS.FONT_16 + txt_color)
         -- lcd.drawText(35, 15, "2", FS.FONT_8 + txt_color)
-
     else
         local txt = [[
 RF2 Server

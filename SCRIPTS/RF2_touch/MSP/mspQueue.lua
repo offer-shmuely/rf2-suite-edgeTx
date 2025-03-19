@@ -65,12 +65,13 @@ function MspQueueController:processQueue()
             self.lastTimeCommandSent = rf2.clock()
             self.retryCount = self.retryCount + 1
         end
+        -- rf2.print("[msp][cmd:%s] cmd still processing", self.currentMessage.command)
 
         mspProcessTxQ()
         cmd, buf, err = mspPollReply()
     else
         if not self.currentMessage.simulatorResponse then
-            rf2.print("No simulator response for command "..tostring(self.currentMessage.command))
+            rf2.print("No simulator response for command: %s", self.currentMessage.command)
             self.currentMessage = nil
             return
         end
@@ -129,7 +130,7 @@ end
 
 function MspQueueController:add(message)
     message = deepCopy(message)
-    rf2.print("Queueing command "..message.command.." at position "..#self.messageQueue + 1)
+    rf2.print("[msp][cmd:%s] Queueing command (at position %s)", message.command, #self.messageQueue + 1)
     self.messageQueue[#self.messageQueue + 1] =  message
     return self
 end
