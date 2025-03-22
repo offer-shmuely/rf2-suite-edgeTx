@@ -196,7 +196,6 @@ local function state_RETRIVE_PERMANENT_INFO_INIT(wgt)
     rf2fc.msp.ctl.msp_rx_request = true
     rf2fc.msp.ctl.mspName = false
     rf2fc.msp.ctl.mspGovernorConfig = false
-    rf2fc.msp.ctl.mspDataflash = false
     rf2fc.msp.ctl.mspRescueProfile = false
 
     log("msp_rx_request: %s", rf2fc.msp.ctl.msp_rx_request)
@@ -241,18 +240,6 @@ local function state_RETRIVE_PERMANENT_INFO_INIT(wgt)
         rf2fc.msp.ctl.mspGovernorConfig = true
     end)
 
-
-    -- mspDataflash
-    rf2.useApi("mspDataflash").getDataflashSummary(function(_, ret)
-        rf2fc.msp.ctl.connected = true
-        rf2fc.msp.ctl.lastUpdateTime = rf2.clock()
-        log("MSP> mspDataflash: %s", tableToString(ret))
-        rf2fc.msp.cache.mspDataflash = ret
-        log("MSP> mspDataflash total: %s, used: %s, free: %s", wgt.mspCacheTools.blackboxSize().totalSize, wgt.mspCacheTools.blackboxSize().usedSize, wgt.mspCacheTools.blackboxSize().freeSize)
-
-        rf2fc.msp.ctl.mspDataflash = true
-    end)
-
     -- mspRescueProfile
     rf2.useApi("mspRescueProfile").getRescueProfile(function(_, ret)
         rf2fc.msp.ctl.connected = true
@@ -272,12 +259,10 @@ local function state_RETRIVE_PERMANENT_INFO(wgt)
 
     log("rf2fc.msp.ctl.mspName: %s", rf2fc.msp.ctl.mspName)
     log("rf2fc.msp.ctl.mspGovernorConfig: %s", rf2fc.msp.ctl.mspGovernorConfig)
-    log("rf2fc.msp.ctl.mspDataflash: %s", rf2fc.msp.ctl.mspDataflash)
     log("rf2fc.msp.ctl.mspRescueProfile: %s", rf2fc.msp.ctl.mspRescueProfile)
 
     if      rf2fc.msp.ctl.mspName           == true
         and rf2fc.msp.ctl.mspGovernorConfig == true
-        and rf2fc.msp.ctl.mspDataflash      == true
         and rf2fc.msp.ctl.mspRescueProfile  == true
         then
 
@@ -298,6 +283,7 @@ local function state_RETRIVE_LIVE_INFO_INIT(wgt)
 
     rf2fc.msp.ctl.msp_rx_request = true
     rf2fc.msp.ctl.mspStatus = false
+    rf2fc.msp.ctl.mspDataflash = false
 
     log("msp_rx_request: %s", rf2fc.msp.ctl.msp_rx_request)
 
@@ -351,6 +337,17 @@ local function state_RETRIVE_LIVE_INFO_INIT(wgt)
         rf2fc.msp.ctl.mspBatteryState = true
     end)
 
+    -- mspDataflash
+    rf2.useApi("mspDataflash").getDataflashSummary(function(_, ret)
+        rf2fc.msp.ctl.connected = true
+        rf2fc.msp.ctl.lastUpdateTime = rf2.clock()
+        log("MSP> mspDataflash: %s", tableToString(ret))
+        rf2fc.msp.cache.mspDataflash = ret
+        log("MSP> mspDataflash total: %s, used: %s, free: %s", wgt.mspCacheTools.blackboxSize().totalSize, wgt.mspCacheTools.blackboxSize().usedSize, wgt.mspCacheTools.blackboxSize().freeSize)
+
+        rf2fc.msp.ctl.mspDataflash = true
+    end)
+
     reqTS = rf2.clock()
     state = STATE.RETRIVE_LIVE_INFO
 end
@@ -361,6 +358,7 @@ local function state_RETRIVE_LIVE_INFO(wgt)
     if      rf2fc.msp.ctl.mspStatus == true
         and rf2fc.msp.ctl.mspBatteryConfig == true
         and rf2fc.msp.ctl.mspBatteryState == true
+        and rf2fc.msp.ctl.mspDataflash    == true
     then
         rf2fc.msp.ctl.msp_rx_request = false
         -- log("msp_rx_request: %s", rf2fc.msp.ctl.msp_rx_request)
