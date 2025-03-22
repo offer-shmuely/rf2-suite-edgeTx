@@ -3,8 +3,15 @@ local function getStatus(callback, callbackParam)
         command = 101, -- MSP_STATUS
         processReply = function(self, buf)
             local status = {}
+            -- offset 1: PID task delta time
             --status.pidCycleTime = rf2.mspHelper.readU16(buf)
+            -- offset 3: Gyro task delta time
             --status.gyroCycleTime = rf2.mspHelper.readU16(buf)
+            -- offset 5: Sensor status
+            buf.offset = 7
+            status.flightModeFlags = rf2.mspHelper.readU32(buf)
+            -- rf2.print("msp flightModeFlags: "..tostring(status.flightModeFlags))
+
             -- offset 11: Profile number (compatibility)
             buf.offset = 12
             status.realTimeLoad = rf2.mspHelper.readU16(buf)

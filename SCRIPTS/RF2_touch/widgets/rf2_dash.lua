@@ -196,16 +196,19 @@ local function refresh(wgt, event, touchState)
 
     -- voltage
     x, y = 5, 55
-    local vbat, vcel, batPercent
-    if wgt.options.useTelemetry == 1 then
-        vbat = inSimu and getValue("A1") or getValue("Vbat") -- ?
-        vcel =  inSimu and getValue("A2") or getValue("Vcel") -- ?
-        batPercent = inSimu and getValue("Tmp1") or getValue("Bat%")
-        -- if inSimu then vcel = 3.6 end
-    else
+    local vbat = getValue("Vbat")
+    if vbat == 0 then
         vbat = (rf2fc.msp.cache.mspBatteryState.batteryVoltage or 0) / 100
+    end
+
+    local vcel = getValue("Vcel")
+    if vcel == 0 then
         vcel = ((rf2fc.msp.cache.mspBatteryState.batteryVoltage or 0) / (rf2fc.msp.cache.mspBatteryConfig.batteryCellCount or 1)) / 100
         -- vcel = rf2fc.msp.cache.mspBatteryConfig.batteryCellCount
+    end
+
+    local batPercent = getValue("Bat%")
+    if batPercent == 0 then
         batPercent = rf2fc.msp.cache.mspBatteryState.batteryPercentageRemaining or -1
     end
 
@@ -225,36 +228,27 @@ local function refresh(wgt, event, touchState)
     -- capacity
     x, y = 5, 140
     local capaTotal = rf2fc.msp.cache.mspBatteryConfig.batteryCapacity or -1
-    local capaUsed = getValue("Capa") or 0
-    -- if wgt.options.useTelemetry == 1 then
-    --     capaUsed = getValue("Capa")
-    -- else
-    --     if isSimu then
-    --         capaUsed = math.floor(capaTotal / 2) or 0
-    --     else
-    --         capaUsed = 0
-    --     end
-    -- end
+    local capaUsed = getValue("Capa")
+    if capaUsed == 0 and inSimu then
+        capaUsed = math.floor(0.75 * capaTotal)
+    end
     if capaTotal == nil or capaTotal == nan or capaTotal ==0 then
         capaTotal = -1
         capaUsed = 0
     end
 
-    local capaPercent = math.floor(100 * capaUsed / capaTotal)
-    -- rf2.log("capacity capaPercent: %s, Total: %s", capaPercent, capaTotal)
+    local capaPercent = math.floor(100 * (capaTotal-capaUsed) / capaTotal)
+    rf2.log("capacity capaPercent: %s, Total: %s", capaPercent, capaTotal)
 
     lcd.drawText(x, y -12, string.format("Capacity (Total: %s)", capaTotal), FS.FONT_6 + WHITE)
     drawBlackboxHorz(wgt, {x=x, y=y+5,w=110,h=35,segments_w=20, color=WHITE, bg_color=GREY, cath_w=10, cath_h=30, segments_h=20, cath=false}, capaPercent)
-    lcd.drawText(x+25, y+2, string.format("%d%%",capaPercent), FS.FONT_16 + WHITE)
+    lcd.drawText(x+25, y+4, string.format("%d%%",capaPercent), FS.FONT_16 + WHITE)
 
     -- current
     x, y = 350, 50
-    local curr
-    if wgt.options.useTelemetry == 1 then
-        curr = getValue("Curr")
-    else
-        curr = math.floor((rf2fc.msp.cache.mspBatteryState.batteryCurrent or 0) / 100)
-    end
+    local curr1 = getValue("Curr")
+    local curr2 = math.floor((rf2fc.msp.cache.mspBatteryState.batteryCurrent or 0) / 100)
+    local curr = (curr1>0) and curr1 or curr2
     lcd.drawText(x, y, "Current", FS.FONT_6 + WHITE)
     local color = (curr < 100) and YELLOW or RED
     lcd.drawText(x, y+12, string.format("%d A", curr), FS.FONT_16 + color)
@@ -310,8 +304,8 @@ local function refresh(wgt, event, touchState)
     -- arm
     x, y= 195, 10
 
-    local armSwitchOn = wgt.mspTool.armSwitchOn()
-    log("armSwitchOn %s:", armSwitchOn)
+    local isArmed = wgt.mspTool.isArmed()
+    log("isArmed %s:", isArmed)
     local flagList = wgt.mspTool.armingDisableFlagsList()
     if flagList ~= nil then
         log("disableFlags len: %s", #flagList)
@@ -333,6 +327,17 @@ local function refresh(wgt, event, touchState)
         log("disableFlags: no info")
     end
 
+    if isArmed then
+        lcd.drawText(x, y,"ARM", FS.FONT_12 + RED)
+    else
+        lcd.drawText(x, y,"Not Arm", FS.FONT_12 + RED)
+    end
+
+    -- if rf2fc.msp.cache.mspStatus.flightModeFlags then
+    --     rf2.log("---flightModeFlags: %x", rf2fc.msp.cache.mspStatus.flightModeFlags)
+    -- else
+    --     rf2.log("---flightModeFlags: nil")
+    -- end
 
     -- x,y = 440,10
     -- lcd.drawFilledRectangle(x,y, 5,170, GREEN)
