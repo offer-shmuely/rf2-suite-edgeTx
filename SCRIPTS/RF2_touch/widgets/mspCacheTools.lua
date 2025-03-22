@@ -89,23 +89,14 @@ function M.armingDisableFlagsList()
     return result
 end
 
-function M.armSwitchOn()
-    local flags = rf2fc.msp.cache.mspStatus.armingDisableFlags
+function M.isArmed()
+    local flags = rf2fc.msp.cache.mspStatus.flightModeFlags
     if flags == nil then
-        return nil
-    end
-
-    for i = 0, 24 do
-        if bit32.band(flags, bit32.lshift(1, i)) ~= 0 then
-            return false
-        end
-    end
-
-    if bit32.band(flags, bit32.lshift(1, 25)) == 1 then
         return false
     end
 
-    return true
+    local armFlag = bit32.band(flags, 0x01)
+    return armFlag == 1
 end
 
 return M
