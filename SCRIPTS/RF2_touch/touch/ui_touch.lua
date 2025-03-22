@@ -34,7 +34,7 @@ local killEnterBreak = 0
 local pageScrollY = 0
 local mainMenuScrollY = 0
 local PageFiles, Page, init
-local img_title_menu = Bitmap.open("touch/images/title_menu.png")
+local img_title_menu = bitmap.open("touch/images/title_menu.png")
 
 local backgroundFill = TEXT_BGCOLOR or ERASE
 local foregroundColor = LINE_COLOR or SOLID
@@ -606,7 +606,7 @@ end
 
 local function run_ui_spalsh(event, touchState)
     if splash_start_time == 0 then
-        img_bg1 = Bitmap.open("touch/images/splash1.png")
+        img_bg1 = bitmap.open("touch/images/splash1.png")
         splash_start_time = getTime()
     end
     lcd.clear()

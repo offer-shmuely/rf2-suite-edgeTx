@@ -32,7 +32,7 @@ local function getData(callback, callbackParam)
             0x94, 0x11, -- batteryCapacity = 4500
             0xE8, 0x03, -- batteryCapacityUsed = 1000
             0x24, 0x09, -- batteryVoltage = 2340  3.9*6
-            0x82, 0x00, -- batteryCurrent = 130
+            0xE0, 0x2E, -- batteryCurrent = 1200 (120A)
             0x4B        -- batteryPercentageRemaining = 75
         }
     }
