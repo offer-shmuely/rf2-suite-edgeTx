@@ -6,7 +6,7 @@ local inSimu = string.sub(select(2,getVersion()), -4) == "simu"
 
 local timerNumber = 1
 
-local err_img = bitmap.open(baseDir .. "widgets/img/no_connection_wr.png")
+local err_img = bitmap.open(baseDir.."widgets/img/no_connection_wr.png")
 -- err_img = bitmap.resize(err_img, wgt.zone.w, wgt.zone.h)
 
 --------------------------------------------------------------
@@ -282,15 +282,15 @@ local function refresh(wgt, event, touchState)
             percent = math.floor(100*blackboxInfo.usedSize/blackboxInfo.totalSize)
         end
         local size = math.floor(blackboxInfo.totalSize/ 1000000)
-        -- local txt = string.format("Blackbox: %s%% %sGB", percent, size)
-        local txt = string.format("Blackbox: %sGB", size)
+        -- local txt = string.format("Blackbox: %s%% %sMB", percent, size)
+        local txt = string.format("Blackbox: %sMB", size)
         lcd.drawText(x, y, txt, FS.FONT_6 + WHITE)
         drawBlackboxHorz(wgt, {x=x,y=y+20,w=75,h=20,segments_w=10, color=WHITE, bg_color=GREY, cath_w=10, cath_h=80, segments_h=20, cath=false}, percent,
             function()
                 return (percent>90) and RED or GREEN
             end
         )
-        -- lcd.drawText(x+10, y+20, string.format("%s%% %sGB", percent, size), FS.FONT_8 + WHITE)
+        -- lcd.drawText(x+10, y+20, string.format("%s%% %sMB", percent, size), FS.FONT_8 + WHITE)
         lcd.drawText(x+25, y+20, string.format("%s%%", percent), FS.FONT_8 + WHITE)
     end
 
