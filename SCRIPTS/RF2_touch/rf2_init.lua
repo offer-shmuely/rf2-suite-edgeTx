@@ -1,6 +1,6 @@
 local baseDir = ...
 
-assert(loadScript(baseDir .. "rf2.lua"))()
+assert(loadScript(baseDir.."rf2.lua"))()
 rf2.protocol = assert(rf2.loadScript("protocols.lua"))()
 rf2.mspQueue = assert(rf2.loadScript("MSP/mspQueue.lua"))()
 rf2.mspQueue.maxRetries = rf2.protocol.maxRetries

@@ -89,11 +89,11 @@ rf2fc = {
     }
 }
 
-loadScript(baseDir .. "rf2.lua")()
+loadScript(baseDir.."rf2.lua")()
 rf2.enable_serial_debug = true
 
 
-local image_file = rf2.baseDir .. "/widgets/img/rf2_logo2.png"
+local image_file = rf2.baseDir.."/widgets/img/rf2_logo2.png"
 
 --------------------------------------------------------------
 local function log(fmt, ...)

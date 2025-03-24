@@ -34,7 +34,7 @@ local killEnterBreak = 0
 local pageScrollY = 0
 local mainMenuScrollY = 0
 local PageFiles, Page, init
-local img_title_menu = bitmap.open("touch/images/title_menu.png")
+local img_title_menu = bitmap.open("/SCRIPTS/"..app_name.."/touch/images/title_menu.png")
 
 local backgroundFill = TEXT_BGCOLOR or ERASE
 local foregroundColor = LINE_COLOR or SOLID
