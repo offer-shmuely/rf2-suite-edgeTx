@@ -1,10 +1,10 @@
 local app_name = "rf2_dash"
-chdir("/SCRIPTS/RF2_touch/widgets")
-local tool = nil
-local tool_opt = loadScript(app_name .. "_opt.lua", "tcd")()
+local widg_dir = "/SCRIPTS/RF2_touch/widgets/"
+chdir(widg_dir)
+local tool_opt = loadScript(widg_dir..app_name .. "_opt.lua", "tcd")()
 
 local function create(zone, options)
-    tool = assert(loadScript(app_name .. ".lua", "tcd"))()
+    tool = assert(loadScript(widg_dir..app_name .. ".lua", "tcd"))()
     return tool.create(zone, options)
 end
 local function update(wgt, options) return tool.update(wgt, options) end

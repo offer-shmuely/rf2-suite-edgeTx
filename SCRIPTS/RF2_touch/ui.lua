@@ -170,7 +170,7 @@ rf2.readPage = function()
 end
 
 local function requestPage()
-    if not Page.reqTS or Page.reqTS + 2 <= rf2.clock() then
+    if not Page.reqTS or Page.reqTS + 5 <= rf2.clock() then
         --rf2.print("Requesting page...")
         Page.reqTS = rf2.clock()
         if Page.read then
@@ -549,7 +549,9 @@ local function run_ui(event)
         end
         if not Page then
             collectgarbage()
+            --rf2.showMemoryUsage("before loading page")
             Page = assert(rf2.loadScript("PAGES/"..PageFiles[currentPage].script))()
+            --rf2.showMemoryUsage("after loading page")
             collectgarbage()
         end
         if not(Page.values or Page.isReady) and pageState == pageStatus.display then

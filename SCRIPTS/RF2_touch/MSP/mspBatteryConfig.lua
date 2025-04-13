@@ -32,7 +32,7 @@ local function getData(callback, callbackParam)
         end,
 
         simulatorResponse = {
-            0x94, 0x11, -- batteryCapacity = 4500
+            0x88, 0x13, -- batteryCapacity = 5000
             0x06,       -- batteryCellCount = 6
             0x01,       -- voltageMeterSource = 1
             0x01,       -- currentMeterSource = 1

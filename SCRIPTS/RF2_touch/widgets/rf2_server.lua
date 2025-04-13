@@ -93,12 +93,13 @@ loadScript(baseDir.."rf2.lua")()
 rf2.enable_serial_debug = true
 
 
-local image_file = rf2.baseDir.."/widgets/img/rf2_logo2.png"
+-- local image_file = rf2.baseDir.."/widgets/img/rf2_logo2.png"
+local image_file = rf2.baseDir.."/widgets/img/rf2_logo3.png"
 
 --------------------------------------------------------------
 local function log(fmt, ...)
-    -- rf2.log(fmt, ...)
-    print(string.format("[%s] " .. fmt, app_name, ...))
+    rf2.log(fmt, ...)
+    -- print(string.format("[%s] " .. fmt, app_name, ...))
 end
 --------------------------------------------------------------
 
@@ -124,6 +125,8 @@ local state = STATE.STARTING
 
 local reqTS = 0
 local backgroundTask
+local interval_read_live_info_arm = 5
+local interval_read_live_info_disarm = 1
 
 local function tableToString(tbl)
     if (tbl == nil) then return "---" end
@@ -168,11 +171,12 @@ end
 
 local function state_WAIT_FOR_CONNECTION_INIT(wgt)
     log("STATE.WAIT_FOR_CONNECTION_INIT")
+    rf2.apiVersion = nil
     state = STATE.WAIT_FOR_CONNECTION
 end
 
 local function state_WAIT_FOR_CONNECTION(wgt)
-    log("STATE.state_WAIT_FOR_CONNECTION 111")
+    log("STATE.state_WAIT_FOR_CONNECTION")
     if wgt.is_telem == false then
         return
     end
@@ -187,7 +191,13 @@ local function state_WAIT_FOR_CONNECTION(wgt)
     assert(rf2.loadScript("MSP/common.lua"))()
     backgroundTask = rf2.loadScript("background.lua")()
 
-    state = STATE.RETRIVE_PERMANENT_INFO_INIT
+    backgroundTask()
+
+    -- isInitialized?
+    if (rf2.apiVersion ~= nil) then
+        state = STATE.RETRIVE_PERMANENT_INFO_INIT
+        log("STATE.WAIT_FOR_CONNECTION: connected")
+    end
 end
 
 local function state_RETRIVE_PERMANENT_INFO_INIT(wgt)
@@ -200,16 +210,12 @@ local function state_RETRIVE_PERMANENT_INFO_INIT(wgt)
 
     log("msp_rx_request: %s", rf2fc.msp.ctl.msp_rx_request)
 
-    rf2.useApi("mspApiVersion").getApiVersion(function(_, version)
-            rf2fc.msp.ctl.connected = true
-            rf2fc.msp.ctl.lastUpdateTime = rf2.clock()
-            rf2.apiVersion = version
-            log("MSP> mspApiVersion: apiVersion: %s", rf2.apiVersion)
-
-            -- if rf2.apiVersion >= 12.07 then
-            -- end
-        end)
-
+    -- rf2.useApi("mspApiVersion").getApiVersion(function(_, version)
+    --         rf2fc.msp.ctl.connected = true
+    --         rf2fc.msp.ctl.lastUpdateTime = rf2.clock()
+    --         rf2.apiVersion = version
+    --         log("MSP> mspApiVersion: apiVersion: %s", rf2.apiVersion)
+    --     end)
 
     -- mspName
     rf2.useApi("mspName").getModelName(function(_, ret)
@@ -222,9 +228,8 @@ local function state_RETRIVE_PERMANENT_INFO_INIT(wgt)
         rf2fc.msp.ctl.mspName = true
     end)
 
-
     -- mspGovernorConfig
-    rf2.useApi("mspGovernorConfig").getGovernorConfig(function(_, ret)
+    rf2.useApi("mspGovernorConfig").read(function(_, ret)
         rf2fc.msp.ctl.connected = true
         rf2fc.msp.ctl.lastUpdateTime = rf2.clock()
         log("MSP> mspGovernorConfig: %s", tableToString(ret))
@@ -241,7 +246,7 @@ local function state_RETRIVE_PERMANENT_INFO_INIT(wgt)
     end)
 
     -- mspRescueProfile
-    rf2.useApi("mspRescueProfile").getRescueProfile(function(_, ret)
+    rf2.useApi("mspRescueProfile").read(function(_, ret)
         rf2fc.msp.ctl.connected = true
         rf2fc.msp.ctl.lastUpdateTime = rf2.clock()
         log("MSP> mspRescueProfile: %s", tableToString(ret))
@@ -341,10 +346,9 @@ local function state_RETRIVE_LIVE_INFO_INIT(wgt)
     rf2.useApi("mspDataflash").getDataflashSummary(function(_, ret)
         rf2fc.msp.ctl.connected = true
         rf2fc.msp.ctl.lastUpdateTime = rf2.clock()
-        log("MSP> mspDataflash: %s", tableToString(ret))
+        -- log("MSP> mspDataflash: %s", tableToString(ret))
         rf2fc.msp.cache.mspDataflash = ret
-        log("MSP> mspDataflash total: %s, used: %s, free: %s", wgt.mspCacheTools.blackboxSize().totalSize, wgt.mspCacheTools.blackboxSize().usedSize, wgt.mspCacheTools.blackboxSize().freeSize)
-
+        -- log("MSP> mspDataflash total: %s, used: %s, free: %s", wgt.mspCacheTools.blackboxSize().totalSize, wgt.mspCacheTools.blackboxSize().usedSize, wgt.mspCacheTools.blackboxSize().freeSize)
         rf2fc.msp.ctl.mspDataflash = true
     end)
 
@@ -383,8 +387,11 @@ local function state_DONE(wgt)
     -- log("STATE.DONE")
     backgroundTask()
 
-    -- log("ttt %s, %s, diff: %s", reqTS, rf2.clock, rf2.clock() - reqTS )
-    if (rf2.clock() - reqTS) > 5 then
+    local tLastRead = rf2.clock() - reqTS
+    local intrv = rf2fc.mspCacheTools.isArmed() and interval_read_live_info_arm or interval_read_live_info_disarm
+    -- rf2.log("isArm: %s, intrv: %s", rf2fc.mspCacheTools.isArmed(), intrv)
+
+    if tLastRead > intrv then
         log("interval to read again...")
         reqTS = rf2.clock()
         state = STATE.RETRIVE_LIVE_INFO_INIT
@@ -459,6 +466,10 @@ local function refresh(wgt)
 
     local isOnTop = wgt.zone.h < 60 and wgt.zone.w < 120
     -- lcd.drawFilledRectangle(0, 0, LCD_W, LCD_H, bg_color)
+    if isOnTop then
+        lcd.drawFilledRectangle(0, 0, LCD_W, LCD_H, BLACK)
+    end
+
     lcd.drawFilledCircle(63, 10, 5, bg_color)
     -- lcd.drawFilledRectangle(0, 0, wgt.zone.w, 60, bg_color)
     local y = 5
@@ -471,8 +482,10 @@ local function refresh(wgt)
 
     if isOnTop then
         lcd.drawBitmap(wgt.img, 0, 0)
-        -- lcd.drawText(0, 0, "RF", FS.FONT_16 + txt_color)
-        -- lcd.drawText(35, 15, "2", FS.FONT_8 + txt_color)
+        local color1 = rf2fc.msp.ctl.connected and lcd.RGB(0x26C4FF) or GREY
+        local color2 = rf2fc.msp.ctl.connected and ORANGE or GREY
+        -- lcd.drawText(4 , -4, "RF", FS.FONT_16 + color1)
+        -- lcd.drawText(37,  3,  "2", FS.FONT_16 + color1)
     else
         local txt = [[
 RF2 Server

@@ -45,10 +45,24 @@ rf2 = {
     end,
 
     apiVersion = nil,
+
+    isEdgeTx = function()
+        return del ~= nil
+    end,
+
+    units = {
+        percentage = "%",
+        degrees = del and "°" or "@", -- OpenTX uses @
+        herz = " Hz",
+        seconds = " s",
+        volt = "V",
+        celsius = " C"
+    },
+
     mspQueue = {},
 
     --[[
-    showMemoryUsage = function (remark)
+    showMemoryUsage = function(remark)
         if not rf2.oldMemoryUsage then
             collectgarbage()
             rf2.oldMemoryUsage = collectgarbage("count")

@@ -62,7 +62,8 @@ end
 
 local function runProtected()
     local status, err = pcall(run)
-    if not status then rf2.print(err) end
+    --if not status then rf2.print(err) end
+    return isInitialized
 end
 
 return runProtected

@@ -29,8 +29,9 @@ local function getData(callback, callbackParam)
         simulatorResponse = {
             0x01,       -- batteryState = 1
             0x06,       -- batteryCellCount = 6
-            0x94, 0x11, -- batteryCapacity = 4500
-            0xE8, 0x03, -- batteryCapacityUsed = 1000
+            0x88, 0x13, -- batteryCapacity = 5000
+            -- 0xA0, 0x0E, -- batteryCapacityUsed = 4000 (80% of 5000)
+            0xE8, 0x03, -- batteryCapacityUsed = 1000 (20% of 5000)
             0x24, 0x09, -- batteryVoltage = 2340  3.9*6
             0xE0, 0x2E, -- batteryCurrent = 1200 (120A)
             0x4B        -- batteryPercentageRemaining = 75

@@ -24,7 +24,7 @@ function M.isCacheAvailable()
         return false, "no RF2_Server widget found"
     end
     if rf2fc.msp.ctl.connected ~= true then
-        return false,"No connection to flight controller"
+        return false,"Heli not connected"
     end
     rf2fc.msp.ctl.lastServerTime = rf2.clock()
 

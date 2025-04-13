@@ -1,5 +1,4 @@
 local app_name = "rf2_dash"
-local app_ver = "0.1"
 
 local baseDir = "/SCRIPTS/RF2_touch/"
 local inSimu = string.sub(select(2,getVersion()), -4) == "simu"
@@ -8,6 +7,10 @@ local timerNumber = 1
 
 local err_img = bitmap.open(baseDir.."widgets/img/no_connection_wr.png")
 -- err_img = bitmap.resize(err_img, wgt.zone.w, wgt.zone.h)
+
+local craft_image = bitmap.open("/IMAGES/sab580.png")
+local craft_image = bitmap.resize(craft_image, 160,100)
+
 
 --------------------------------------------------------------
 local function log(fmt, ...)
@@ -35,6 +38,42 @@ local function update(wgt, options)
     if (wgt == nil) then return end
     wgt.options = options
     log("update options: %s", tableToString(options))
+
+    wgt.values = {
+        craft_name = "-------",
+        timer_str = "--:--",
+        rpm = -1,
+        rpm_str = "-1",
+        profile_id = -1,
+        profile_id_str = "--",
+        rate_id = -1,
+        rate_id_str = "--",
+
+        vbat = -1,
+        vcel = -1,
+        cell_percent = -1,
+        volt = -1,
+        curr = -1,
+        curr_str = "-1",
+        capaTotal = -1,
+        capaUsed = -1,
+        capaPercent = -1,
+
+        governor_str = "-------",
+        bb_enabled = true,
+        bb_percent = 0,
+        bb_size = 0,
+        rescue_on = false,
+        rescue_txt = "--",
+        bb_txt = "Blackbox: --% 0MB",
+        is_arm = false,
+        arm_fail = false,
+        arm_disable_flags_list = nil,
+        arm_disable_flags_txt = "",
+
+        thr_max = -1,
+    }
+
     return wgt
 end
 
@@ -148,6 +187,185 @@ local function formatTime(wgt, t1)
     return time_str, isNegative
 end
 
+
+local function updateCraftName(wgt)
+    wgt.values.craft_name = wgt.mspTool.craftName()
+end
+
+local function updateTimeCount(wgt)
+    local t1 = model.getTimer(timerNumber - 1)
+    local time_str, isNegative = formatTime(wgt, t1)
+    wgt.values.timer_str = time_str
+end
+
+local function updateRpm(wgt)
+    local Hspd = getValue("Hspd")
+    if inSimu then Hspd = 1800 end
+    wgt.values.rpm = Hspd
+    wgt.values.rpm_str = string.format("%d",Hspd)
+end
+
+local function updateProfiles(wgt)
+    -- Current PID profile
+    local profile_id = getValue("PID#")
+    if profile_id > 0 then
+        wgt.values.profile_id = profile_id
+    else
+        wgt.values.profile_id = wgt.mspTool and wgt.mspTool.profileId()
+    end
+    wgt.values.profile_id_str = string.format("%s", wgt.values.profile_id)
+
+    -- Current Rate profile
+    local rate_id = getValue("RTE#")
+    if rate_id > 0 then
+        wgt.values.rate_id = rate_id
+    else
+        wgt.values.rate_id = wgt.mspTool and wgt.mspTool.rateProfile()
+    end
+    wgt.values.rate_id_str = string.format("%s", wgt.values.rate_id)
+end
+
+local function updateCell(wgt)
+    local vbat = getValue("Vbat")
+    if vbat == 0 then
+        vbat = (rf2fc.msp.cache.mspBatteryState.batteryVoltage or 0) / 100
+    end
+
+    local vcel = getValue("Vcel")
+    if vcel == 0 then
+        vcel = ((rf2fc.msp.cache.mspBatteryState.batteryVoltage or 0) / (rf2fc.msp.cache.mspBatteryConfig.batteryCellCount or 1)) / 100
+        -- vcel = rf2fc.msp.cache.mspBatteryConfig.batteryCellCount
+    end
+
+    local batPercent = getValue("Bat%")
+    if batPercent == 0 then
+        batPercent = rf2fc.msp.cache.mspBatteryState.batteryPercentageRemaining or -1
+    end
+    -- log("vbat: %s, vcel: %s, BatPercent: %s", vbat, vcel, batPercent)
+
+    wgt.values.vbat = vbat
+    wgt.values.vcel = vcel
+    wgt.values.cell_percent = batPercent
+    wgt.values.volt = (wgt.options.showTotalVoltage==1) and vbat or vcel
+    wgt.values.cellColor = (vcel < 3.7) and RED or GREEN
+end
+
+local function updateCurr(wgt)
+    wgt.values.curr = getValue("Curr")
+    if wgt.values.curr == 0 then
+        wgt.values.curr = math.floor((rf2fc.msp.cache.mspBatteryState.batteryCurrent or 0) / 100)
+    end
+    wgt.values.curr_str = string.format("%dA", wgt.values.curr)
+end
+
+local function updateCapa(wgt)
+    -- capacity
+    wgt.values.capaTotal = rf2fc.msp.cache.mspBatteryConfig.batteryCapacity or -1
+    wgt.values.capaUsed = getValue("Capa")
+    -- if wgt.values.capaUsed == 0 and inSimu then
+    if wgt.values.capaUsed == 0 then
+        -- wgt.values.capaUsed = math.floor(0.75 * wgt.values.capaTotal)
+        wgt.values.capaUsed = rf2fc.msp.cache.mspBatteryState and rf2fc.msp.cache.mspBatteryState.batteryCapacityUsed or 0
+    end
+
+    if wgt.values.capaTotal == nil or wgt.values.capaTotal == nan or wgt.values.capaTotal ==0 then
+        wgt.values.capaTotal = -1
+        wgt.values.capaUsed = 0
+    end
+
+    if wgt.values.capaTotal == nil or wgt.values.capaTotal == nan or wgt.values.capaTotal ==0 then
+        wgt.values.capaTotal = -1
+        wgt.values.capaUsed = 0
+    end
+    wgt.values.capaPercent = math.floor(100 * (wgt.values.capaTotal - wgt.values.capaUsed) // wgt.values.capaTotal)
+    local p = wgt.values.capaPercent
+    if (p < 10) then
+        wgt.values.capaColor = RED
+    elseif (p < 30) then
+        wgt.values.capaColor = ORANGE
+    else
+        wgt.values.capaColor = lcd.RGB(0x00963A) --GREEN
+    end
+end
+
+local function updateGovernor(wgt)
+    if wgt.mspTool.governorEnabled() then
+        wgt.values.governor_str = string.format("%s", wgt.mspTool.governorMode())
+    else
+        wgt.values.governor_str = "OFF"
+    end
+end
+
+local function updateBB(wgt)
+    wgt.values.bb_enabled = wgt.mspTool.blackboxEnable()
+
+    if wgt.values.bb_enabled then
+        local blackboxInfo = wgt.mspTool.blackboxSize()
+        if blackboxInfo.totalSize > 0 then
+            wgt.values.bb_percent = math.floor(100*(blackboxInfo.usedSize/blackboxInfo.totalSize))
+        end
+        wgt.values.bb_size = math.floor(blackboxInfo.totalSize/ 1000000)
+        wgt.values.bb_txt = string.format("Blackbox: %s mb", wgt.values.bb_size)
+    end
+    wgt.values.bbColor = (wgt.values.bb_percent < 90) and GREEN or RED
+end
+
+local function updateRescue(wgt)
+    wgt.values.rescue_on = rf2fc.msp.cache.mspRescueProfile.mode == 1
+
+    -- rescue enabled?
+    wgt.values.rescue_txt = wgt.values.rescue_on and "ON" or "OFF"
+    -- -- local rescueFlip = rf2fc.msp.cache.mspRescueProfile.flip_mode == 1
+    -- -- if rescueOn then
+    -- --     txt = string.format("%s (%s)", txt, (rescueFlip) and "Flip" or "No Flip")
+    -- -- end
+end
+
+local  function updateArm(wgt)
+    wgt.values.is_arm = wgt.mspTool.isArmed()
+    -- log("isArmed %s:", wgt.values.is_arm)
+    local flagList = wgt.mspTool.armingDisableFlagsList()
+    wgt.values.arm_disable_flags_list = flagList
+    wgt.values.arm_disable_flags_txt = ""
+
+    if flagList ~= nil then
+        -- log("disableFlags len: %s", #flagList)
+        if (#flagList == 0) then
+            -- lcd.drawText(x, y,"ARM", FS.FONT_12 + RED)
+        else
+            -- lcd.drawText(x, y,"Not Arm", FS.FONT_12 + RED)
+            for i in pairs(flagList) do
+                -- log("disableFlags: %s", i)
+                -- log("disableFlags: %s", flagList[i])
+                wgt.values.arm_disable_flags_txt = wgt.values.arm_disable_flags_txt .. flagList[i] .. "\n"
+            end
+
+        end
+    else
+        wgt.values.arm_disable_flags_txt = ""
+    end
+
+end
+
+local function updateThr(wgt)
+    local id = getSourceIndex("CH3") --????
+    local val = (getValue(id)+1024)*100//2048
+    wgt.values.thr_max = math.max(wgt.values.thr_max, val)
+end
+
+local function updateTemperature(wgt)
+    wgt.values.EscT = getValue("EscT")
+    wgt.values.EscT_max = getValue("EscT+")
+    if wgt.values.EscT == 0 then
+        wgt.values.EscT = math.floor((rf2fc.msp.cache.mspBatteryState.batteryCurrent or 0) / 100)
+    end
+    wgt.values.EscT_str = string.format("%d°c", wgt.values.EscT)
+    wgt.values.EscT_max_str = string.format("%d°c", wgt.values.EscT_max)
+end
+
+
+
+
 local function background(wgt)
 end
 
@@ -173,15 +391,31 @@ local function refresh(wgt, event, touchState)
         return
     end
 
+    updateCraftName(wgt)
+    updateTimeCount(wgt)
+    updateRpm(wgt)
+    updateProfiles(wgt)
+    updateCell(wgt)
+    updateCurr(wgt)
+    updateCapa(wgt)
+    updateGovernor(wgt)
+    updateBB(wgt)
+    updateRescue(wgt)
+    updateArm(wgt)
+    updateThr(wgt)
+    updateTemperature(wgt)
+
+
     -- profile
     -- image /touch/images/pids.png
     lcd.drawText(0,0, "Bank", FS.FONT_6 + WHITE)
-    lcd.drawText(6,10, string.format("%s", wgt.mspTool.profileId()), FS.FONT_16 + BLUE)
+    lcd.drawText(6,10, string.format("%s", wgt.values.profile_id_str), FS.FONT_16 + BLUE)
 
     -- rate
     -- image /touch/images/rates.png
-    lcd.drawText(48,0,"Rate", FS.FONT_6 + WHITE)
-    lcd.drawText(50,10,string.format("%s", wgt.mspTool.rateProfile()), FS.FONT_16 + ORANGE)
+    lcd.drawText(44,0,"Rate", FS.FONT_6 + WHITE)
+    -- lcd.drawText(46,10,string.format("%s", wgt.values.rate_id_str), FS.FONT_16 + ORANGE)
+    lcd.drawText(46,10,string.format("%s", wgt.values.rate_id_str), FS.FONT_16 + ORANGE)
 
     -- time
     local t1 = model.getTimer(timerNumber - 1)
@@ -189,134 +423,95 @@ local function refresh(wgt, event, touchState)
     lcd.drawText(140,50, time_str, FS.FONT_38 + WHITE)
 
     -- rpm
-    local Hspd = getValue("Hspd")
-    if inSimu then Hspd = 1800 end
     lcd.drawText(185+25,120, "RPM", FS.FONT_6 + WHITE)
-    lcd.drawText(185, 130, string.format("%d",Hspd), FS.FONT_16 + WHITE)
+    lcd.drawText(185, 130, wgt.values.rpm_str, FS.FONT_16 + WHITE)
 
     -- voltage
     x, y = 5, 55
-    local vbat = getValue("Vbat")
-    if vbat == 0 then
-        vbat = (rf2fc.msp.cache.mspBatteryState.batteryVoltage or 0) / 100
-    end
-
-    local vcel = getValue("Vcel")
-    if vcel == 0 then
-        vcel = ((rf2fc.msp.cache.mspBatteryState.batteryVoltage or 0) / (rf2fc.msp.cache.mspBatteryConfig.batteryCellCount or 1)) / 100
-        -- vcel = rf2fc.msp.cache.mspBatteryConfig.batteryCellCount
-    end
-
-    local batPercent = getValue("Bat%")
-    if batPercent == 0 then
-        batPercent = rf2fc.msp.cache.mspBatteryState.batteryPercentageRemaining or -1
-    end
-
-    log("vbat: %s, vcel: %s, BatPercent: %s", vbat, vcel, batPercent)
-    local volt = (wgt.options.showTotalVoltage==1) and vbat or vcel
-    lcd.drawText(x, y, "Cell", FS.FONT_6 + WHITE)
+    -- log("vbat: %s, vcel: %s, BatPercent: %s", vbat, vcel, batPercent)
+    lcd.drawText(x, y, "Battery", FS.FONT_6 + WHITE)
     -- lcd.drawText(x, y, string.format("Cell   %d%%", batPercent), FS.FONT_6 + WHITE)
-    lcd.drawText(x, y+12, string.format("%.02fv",volt), FS.FONT_16 + WHITE)
-    local percent = batPercent
-    drawBlackboxHorz(wgt, {x=x, y=y+48,w=110,h=10,segments_w=20, color=WHITE, bg_color=GREY, cath_w=10, cath_h=8, segments_h=20, cath=false}, percent,
+    lcd.drawText(x, y+12, string.format("%.02fv",wgt.values.volt), FS.FONT_16 + WHITE)
+    drawBlackboxHorz(wgt, {x=x, y=y+48,w=110,h=10,segments_w=20, color=WHITE, bg_color=GREY, cath_w=10, cath_h=8, segments_h=20, cath=false},
+        wgt.values.cell_percent,
         function()
-            return (vcel < 3.7) and RED or GREEN
+            return wgt.values.cellColor
         end
     )
-    lcd.drawText(90,85, string.format("%d%%", batPercent), FS.FONT_6 + WHITE)
+    lcd.drawText(90,85, string.format("%d%%", wgt.values.cell_percent), FS.FONT_6 + WHITE)
 
     -- capacity
-    x, y = 5, 140
-    local capaTotal = rf2fc.msp.cache.mspBatteryConfig.batteryCapacity or -1
-    local capaUsed = getValue("Capa")
-    if capaUsed == 0 and inSimu then
-        capaUsed = math.floor(0.75 * capaTotal)
-    end
-    if capaTotal == nil or capaTotal == nan or capaTotal ==0 then
-        capaTotal = -1
-        capaUsed = 0
-    end
-
-    local capaPercent = math.floor(100 * (capaTotal-capaUsed) / capaTotal)
-    rf2.log("capacity capaPercent: %s, Total: %s", capaPercent, capaTotal)
-
-    lcd.drawText(x, y -12, string.format("Capacity (Total: %s)", capaTotal), FS.FONT_6 + WHITE)
-    drawBlackboxHorz(wgt, {x=x, y=y+5,w=110,h=35,segments_w=20, color=WHITE, bg_color=GREY, cath_w=10, cath_h=30, segments_h=20, cath=false}, capaPercent)
-    lcd.drawText(x+25, y+4, string.format("%d%%",capaPercent), FS.FONT_16 + WHITE)
+    x, y = 5, 132
+    rf2.log("capacity capaPercent: %s, Total: %s", wgt.values.capaPercent, wgt.values.capaTotal)
+    lcd.drawText(x, y -12, string.format("Capacity (Total: %s)", wgt.values.capaTotal), FS.FONT_6 + WHITE)
+    drawBlackboxHorz(wgt, {x=x, y=y+5,w=140,h=35,segments_w=20, color=WHITE, bg_color=GREY, cath_w=10, cath_h=30, segments_h=20, cath=false},
+        wgt.values.capaPercent
+    )
+    lcd.drawText(x+25, y+4, string.format("%d%%",wgt.values.capaPercent), FS.FONT_16 + WHITE)
 
     -- current
-    x, y = 350, 50
-    local curr1 = getValue("Curr")
-    local curr2 = math.floor((rf2fc.msp.cache.mspBatteryState.batteryCurrent or 0) / 100)
-    local curr = (curr1>0) and curr1 or curr2
+    x, y = 350, 110
     lcd.drawText(x, y, "Current", FS.FONT_6 + WHITE)
-    local color = (curr < 100) and YELLOW or RED
-    lcd.drawText(x, y+12, string.format("%d A", curr), FS.FONT_16 + color)
+    local color = (wgt.values.curr < 100) and YELLOW or RED
+    lcd.drawText(x, y+12, string.format("%d A", wgt.values.curr), FS.FONT_16 + color)
 
-    -- rescue enabled?
-    x, y = 350+20, 145
-    local rescueOn = rf2fc.msp.cache.mspRescueProfile.mode == 1
-    -- local rescueFlip = rf2fc.msp.cache.mspRescueProfile.flip_mode == 1
-    local txt = rescueOn and "ON" or "OFF"
-    -- if rescueOn then
-    --     txt = string.format("%s (%s)", txt, (rescueFlip) and "Flip" or "No Flip")
+    -- -- rescue enabled?
+    -- x, y = 350+20, 145
+    -- local rescueOn = rf2fc.msp.cache.mspRescueProfile.mode == 1
+    -- -- local rescueFlip = rf2fc.msp.cache.mspRescueProfile.flip_mode == 1
+    -- local txt = rescueOn and "ON" or "OFF"
+    -- -- if rescueOn then
+    -- --     txt = string.format("%s (%s)", txt, (rescueFlip) and "Flip" or "No Flip")
+    -- -- end
+    --
+    -- lcd.drawText(x, y, "Rescue", FS.FONT_6 + WHITE)
+    -- lcd.drawText(x, y+12, txt, FS.FONT_8 + WHITE)
+
+    -- -- governor
+    -- x, y = 10, 186
+    -- if wgt.mspTool.governorEnabled() then
+    --     lcd.drawText(x ,y,string.format("Using RF governor\nmode: %s", wgt.mspTool.governorMode()), FS.FONT_6 + WHITE)
+    -- else
+    --     lcd.drawText(x ,y,"governor  disabled", FS.FONT_6 + WHITE)
     -- end
 
-    lcd.drawText(x, y, "Rescue", FS.FONT_6 + WHITE)
-    lcd.drawText(x, y+12, txt, FS.FONT_8 + WHITE)
-
-    -- governor
-    x, y = 10, 186
-    if wgt.mspTool.governorEnabled() then
-        lcd.drawText(x ,y,string.format("Using RF governor\nmode: %s", wgt.mspTool.governorMode()), FS.FONT_6 + WHITE)
-    else
-        lcd.drawText(x ,y,"governor  disabled", FS.FONT_6 + WHITE)
-    end
-
     -- blackbox
-    x, y = 350, 100
-    if wgt.mspTool.blackboxEnable() then
-        local blackboxInfo = wgt.mspTool.blackboxSize()
-        local percent = 0
-        if blackboxInfo.totalSize > 0 then
-            percent = math.floor(100*blackboxInfo.usedSize/blackboxInfo.totalSize)
-        end
-        local size = math.floor(blackboxInfo.totalSize/ 1000000)
-        -- local txt = string.format("Blackbox: %s%% %sMB", percent, size)
-        local txt = string.format("Blackbox: %sMB", size)
-        lcd.drawText(x, y, txt, FS.FONT_6 + WHITE)
-        drawBlackboxHorz(wgt, {x=x,y=y+20,w=75,h=20,segments_w=10, color=WHITE, bg_color=GREY, cath_w=10, cath_h=80, segments_h=20, cath=false}, percent,
+    x, y = 350, 160
+    if wgt.values.bb_enabled then
+        lcd.drawText(x, y, wgt.values.bb_txt, FS.FONT_6 + WHITE)
+        drawBlackboxHorz(wgt, {x=x,y=y+20,w=75,h=20,segments_w=10, color=WHITE, bg_color=GREY, cath_w=10, cath_h=80, segments_h=20, cath=false},
+        wgt.values.bb_percent,
             function()
-                return (percent>90) and RED or GREEN
+                return wgt.values.bbColor
             end
         )
-        -- lcd.drawText(x+10, y+20, string.format("%s%% %sMB", percent, size), FS.FONT_8 + WHITE)
-        lcd.drawText(x+25, y+20, string.format("%s%%", percent), FS.FONT_8 + WHITE)
+        -- lcd.drawText(x+10, y+20, string.format("%s%% %sMB", wgt.values.bb_percent, wgt.values.bb_size), FS.FONT_8 + WHITE)
+        lcd.drawText(x+25, y+20, string.format("%s%%", wgt.values.bb_percent), FS.FONT_8 + WHITE)
     end
-
 
     -- craft name
     x,y = 160, 180
     lcd.drawText(x, y,"Heli Name", FS.FONT_6 + WHITE)
-    lcd.drawText(x, y+15, wgt.mspTool.craftName(), FS.FONT_12 + ORANGE)
-    -- lcd.drawText(dbgx, dbgy,"Heli: " .. wgt.mspTool.craftName(), FS.FONT_12 + ORANGE)
+    lcd.drawText(x, y+15, wgt.values.craft_name, FS.FONT_12 + ORANGE)
+    -- lcd.drawText(dbgx, dbgy,"Heli: " .. wgt.values.craft_name, FS.FONT_12 + ORANGE)
 
     -- arm
     x, y= 195, 10
+    if wgt.values.is_arm then
+        lcd.drawText(x, y,"ARM", FS.FONT_12 + RED)
+    else
+        lcd.drawText(x, y,"Not Arm", FS.FONT_12 + RED)
+    end
 
-    local isArmed = wgt.mspTool.isArmed()
-    log("isArmed %s:", isArmed)
-    local flagList = wgt.mspTool.armingDisableFlagsList()
+    local flagList = wgt.values.arm_disable_flags_list
     if flagList ~= nil then
-        log("disableFlags len: %s", #flagList)
+        -- log("disableFlags len: %s", #flagList)
         if (#flagList == 0) then
-            -- lcd.drawText(x, y,"ARM", FS.FONT_12 + RED)
         else
-            -- lcd.drawText(x, y,"Not Arm", FS.FONT_12 + RED)
             y = y + 30
             for i in pairs(flagList) do
-                log("disableFlags: %s", i)
-                log("disableFlags: %s", flagList[i])
+                -- log("disableFlags: %s", i)
+                -- log("disableFlags: %s", flagList[i])
                 lcd.drawFilledRectangle(x,y,130, 20, RED)
                 lcd.drawText(x+5, y+1,flagList[i], FS.FONT_8 + WHITE)
                 y = y + 25
@@ -327,11 +522,11 @@ local function refresh(wgt, event, touchState)
         log("disableFlags: no info")
     end
 
-    if isArmed then
-        lcd.drawText(x, y,"ARM", FS.FONT_12 + RED)
-    else
-        lcd.drawText(x, y,"Not Arm", FS.FONT_12 + RED)
-    end
+
+    -- craft image
+    -- lcd.drawFilledRectangle(LCD_W-100, 0, 100, 100, GREY)
+    lcd.drawBitmap(craft_image, LCD_W-160, 0)
+
 
     -- if rf2fc.msp.cache.mspStatus.flightModeFlags then
     --     rf2.log("---flightModeFlags: %x", rf2fc.msp.cache.mspStatus.flightModeFlags)
@@ -353,4 +548,4 @@ local function refresh(wgt, event, touchState)
 --    dbgLayout()
 end
 
-return {name=app_name, options=options, translate=translate, create=create, update=update, background=background, refresh=refresh}
+return {name=app_name, create=create, update=update, background=background, refresh=refresh}

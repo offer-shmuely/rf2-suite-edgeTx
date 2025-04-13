@@ -2,16 +2,6 @@ local app_name = "rf2_name"
 
 local baseDir = "/SCRIPTS/RF2_touch/"
 
-local options = {
-    { "text_color", COLOR, COLOR_THEME_SECONDARY1 },
-}
-local function translate(name)
-    local translations = {
-        text_color = "Text Color",
-    }
-    return translations[name]
-end
-
 --------------------------------------------------------------
 local function log(fmt, ...)
     print(string.format("[%s] "..fmt, app_name, ...))
@@ -50,6 +40,7 @@ local function refresh(wgt)
 
     if is_avail == false then
         lcd.drawText(10 ,0, err, FS.FONT_8 + RED)
+        -- lcd.drawText(10 ,0, "---------", FS.FONT_8 + RED)
         return
     end
 
@@ -58,4 +49,4 @@ local function refresh(wgt)
     lcd.drawText(10 ,0, craftName, FS.FONT_12 + wgt.options.text_color)
 end
 
-return {name=app_name, options=options, translate=translate, create=create, update=update, background=background, refresh=refresh}
+return {name=app_name, create=create, update=update, background=background, refresh=refresh}
