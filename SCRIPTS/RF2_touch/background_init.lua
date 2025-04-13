@@ -120,6 +120,7 @@ local function initializeQueue()
 
     rf2.useApi("mspApiVersion").getApiVersion(
         function(_, version)
+            rf2.log("API version: %s", version)
             rf2.apiVersion = version
 
             if autoSetName then
@@ -173,8 +174,7 @@ local function initialize(modelIsConnected)
 end
 
 local function run(modelIsConnected)
-    return
-    {
+    return {
         isInitialized = initialize(modelIsConnected),
         crsfCustomTelemetryEnabled = crsfCustomTelemetryEnabled,
         crsf_telemetry_sensors = crsf_telemetry_sensors
