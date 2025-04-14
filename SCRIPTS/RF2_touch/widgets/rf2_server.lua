@@ -296,7 +296,7 @@ local function state_RETRIVE_LIVE_INFO_INIT(wgt)
     rf2.useApi("mspStatus").getStatus(function(_, ret)
         rf2fc.msp.ctl.connected = true
         rf2fc.msp.ctl.lastUpdateTime = rf2.clock()
-        log("MSP> mspStatus: %s", tableToString(ret))
+        -- log("MSP> mspStatus: %s", tableToString(ret))
         -- rf2fc.msp.cache.mspStatus = ret
         rf2fc.msp.cache.mspStatus = ret
         rf2fc.msp.ctl.mspStatus = true

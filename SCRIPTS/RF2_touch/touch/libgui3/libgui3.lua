@@ -63,7 +63,7 @@ function M.getVer()
 end
 
 function M.log(fmt, ...)
-    print(string.format("111: " .. fmt, ...))
+    print(string.format("libgui3: " .. fmt, ...))
 end
 function log(fmt, ...)
     M.log(fmt, ...)
@@ -170,7 +170,7 @@ function M.newPanel(id, args)
 
     -----------------------------------------------------------------------------------------------
     function panel.log(fmt, ...)
-        print(string.format("111: " .. fmt, ...))
+        print(string.format("panel-" .. (panel.id or "--") .. ": " .. fmt, ...))
     end
 
 
@@ -246,6 +246,7 @@ function M.newPanel(id, args)
 
     function panel.drawFilledRectangle(x, y, w, h, flags, opacity)
         x, y = panel.translate(x, y)
+        --log("lcd.drawFilledRectangle([%s] x: %s, y: %s, w: %s, h: %s, flags: %s, opacity: %s", panel.id, x, y, w, h, flags, opacity)
         lcd.drawFilledRectangle(x, y, w, h, flags, opacity)
     end
 
@@ -384,7 +385,8 @@ function M.newPanel(id, args)
             return
         end
         color = color or panel.colors.focus
-        panel.drawRectangle(x - 2, y - 2, w + 4, h + 4, color, 2)
+        -- panel.drawRectangle(x - 2, y - 2, w + 4, h + 4, color, 3)
+        panel.drawRectangle(x - 3, y - 3, w + 6, h + 6, color, 4)
     end
 
     -- Move focus to another element

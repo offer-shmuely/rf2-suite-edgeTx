@@ -35,20 +35,20 @@ function ctl_number_editor_btn(panel, id, args)
     }
 
     local btn_list = {
-        {x=370, y=80,   w=60, h=35, txt="+10", step=10},
-        {x=370, y=115,  w=60, h=35, txt="+1", step=1},
+        {x=370, y=80,   w=60, h=35, txt=string.format("+%s",self.steps*10) , step=self.steps*10},
+        {x=370, y=115,  w=60, h=35, txt=string.format("+%s",self.steps),  step=self.steps},
         {x=370, y=150,  w=60, h=35, txt="DEF", step="DEFAULT"},
-        {x=370, y=185,  w=60, h=35, txt="-1", step=-1},
-        {x=370, y=220,  w=60, h=35, txt="-10", step=-10},
+        {x=370, y=185,  w=60, h=35, txt=string.format("-%s",self.steps),  step=self.steps*-1},
+        {x=370, y=220,  w=60, h=35, txt=string.format("-%s",self.steps*10), step=self.steps*-10},
     }
 
     function self.get_value()
-        -- log("[%s] get_value() - scroll_offset_y is nil", self.id)
+        -- self.panel.log("[%s] get_value() - scroll_offset_y is nil", self.id)
         return self.value
     end
 
     function self.set_value(v)
-        -- log("set_value(%s)", v)
+        -- self.panel.log("set_value(%s)", v)
         self.value = v
     end
 
@@ -94,9 +94,9 @@ function ctl_number_editor_btn(panel, id, args)
         elseif self.steps < 1 then
             txt = string.format("%.1f", v)
         else
-            txt = string.format("%d", v)
+            txt = string.format("%.0f", v)
         end
-        -- log("n_val(%s) = %s", v, txt)
+        -- panel.log("n_val(%s) = %s (steps: %s)", v, txt, self.steps)
         return txt
     end
 
@@ -116,15 +116,15 @@ function ctl_number_editor_btn(panel, id, args)
             math.floor(n_val/step + 0.5),
             math.floor(n_val/step + 0.5)*step)
 
-        panel.log("n_val pre: n_val:%s, steps=%s, %s, %s, %s , %s",n_val,self.steps,
-            n_val/self.steps,
-            n_val/self.steps + 0.5,
-            math.floor(n_val/self.steps + 0.5),
-            math.floor(n_val/self.steps + 0.5)*self.steps)
+        -- panel.log("n_val pre: n_val:%s, steps=%s, %s, %s, %s , %s",n_val,self.steps,
+        --     n_val/self.steps,
+        --     n_val/self.steps + 0.5,
+        --     math.floor(n_val/self.steps + 0.5),
+        --     math.floor(n_val/self.steps + 0.5)*self.steps)
 
         n_val = math.floor(n_val/step + 0.5)*step
-        n_val = math.floor(n_val/self.steps + 0.5)*self.steps
-        panel.log("n_val post - %s", n_val)
+        -- n_val = math.floor(n_val/self.steps + 0.5)*self.steps
+        panel.log("n_val post:- %s", n_val)
 
 
         n_val = math.min(n_val, self.max)
@@ -198,8 +198,8 @@ function ctl_number_editor_btn(panel, id, args)
         -- lcd.drawText(x + w - 5, y + h_header + 2, string.format("max: \n%s", f.min), FONT_SIZES.FONT_8 + BLACK + RIGHT)
         -- lcd.drawText(x + w - 5, y + h - 45, string.format("max: \n%s", f.max), FONT_SIZES.FONT_8 + BLACK + RIGHT)
         -- lcd.drawText(x + 20, y1 + h_header + 20, string.format("%s", f.t2 or f.t), FONT_SIZES.FONT_8 + WHITE)
-        panel.drawText(x+20 , y + h -40, string.format("min: %s", self.min), panel.FONT_SIZES.FONT_8 + WHITE)
-        panel.drawText(x+200, y + h -40, string.format("max: %s", self.max), panel.FONT_SIZES.FONT_8 + WHITE)
+        panel.drawText(x+20 , y + h -40, string.format("min: %s", self.format_val(self.min)), panel.FONT_SIZES.FONT_6 + WHITE)
+        panel.drawText(x+200, y + h -40, string.format("max: %s", self.format_val(self.max)), panel.FONT_SIZES.FONT_6 + WHITE)
         -- panel.drawText(x+20, y + self.h_header + 70, string.format("steps: %s", self.steps), panel.FONT_SIZES.FONT_8 + WHITE)
         if self.help ~= nil and self.help ~= "" then
             --panel.drawText(x + 10, y + self.h_header + 5, self.help, panel.FONT_SIZES.FONT_8 + WHITE)
@@ -232,7 +232,7 @@ function ctl_number_editor_btn(panel, id, args)
         panel.drawText((x + w) / 2 + 80, y + 30, val_txt, panel.FONT_SIZES.FONT_16 + BOLD + RED + RIGHT)
         panel.drawText((x + w) / 2 + 85, y + 60, units_txt, panel.FONT_SIZES.FONT_12 + BOLD + RED)
         if self.val_org ~= f_val then
-            lcd.drawText((x + w) / 2 + 80, y + 60 + 35, string.format("current: %s %s", self.val_org, units_txt), panel.FONT_SIZES.FONT_8 + WHITE + RIGHT)
+            lcd.drawText((x + w) / 2 + 80, y + 60 + 35, string.format("current: %s %s", self.format_val(self.val_org), units_txt), panel.FONT_SIZES.FONT_8 + WHITE + RIGHT)
         end
 
         -- progress bar
@@ -253,9 +253,7 @@ function ctl_number_editor_btn(panel, id, args)
         panel.drawFilledRectangle(x1, y1 + 2, px, h1, lcd.RGB(0x00, 0xB0, 0xDC))
         -- panel.drawFilledCircle(x + px - r/2, y + r/2, r, lcd.RGB(0x00, 0xB0, 0xDC))
         panel.drawFilledCircle(x1 + px - r1/2, y1 + r1/2, r1, BLUE)
-
     end
-
 
     function self.onEvent(event, touchState)
         panel.log("[%s] fancy  self.onEvent(%s) (event:%s, touchState:%s)", self.id, self.text, event, touchState)

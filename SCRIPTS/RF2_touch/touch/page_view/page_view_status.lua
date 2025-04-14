@@ -55,9 +55,9 @@ function M.buildSpecialFields(libGUI, panel, Page, y, updateValueChange)
     --     local f = Page.fields[i]
     --     if f == nil then break end
 
-    --     local f_min = f.min or (f.data and f.data.min) or 0
-    --     local f_max = f.min or (f.data and f.data.max) or 0
-    --     local f_value = f.value or (f.data and f.data.value)
+    --     local f_min = f.data.min or 0
+    --     local f_max = f.data.max or 0
+    --     local f_value = f.data.value
     --     if (f_value) then
     --         f_value = f_value/(f.data.scale or 1)
     --     end
@@ -68,7 +68,7 @@ function M.buildSpecialFields(libGUI, panel, Page, y, updateValueChange)
     --         x=row_x, y=y, w=row_w, h=row_h,
     --         min = f_min,
     --         max = f_max,
-    --         steps=(1/(f.scale or 1))*(f.mult or 1),
+    --         steps=(1/(f.data.scale or 1))*(f.data.mult or 1),
     --         value=f_value,
     --         units="",
     --         text=f_name,

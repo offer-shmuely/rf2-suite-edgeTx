@@ -62,8 +62,8 @@ local isFiledsNeedToSave = false
 local panelTopBar = libGUI.newPanel("panelTopBar")
 local panelMainMenu = libGUI.newPanel("mainMenu", {enable_page_scroll=true})
 local panelFieldsPage = nil
-local modalWatingPanel = nil
-local modalWatingCtl = nil
+local modalWaitingPanel = nil
+local modalWaitingCtl = nil
 
 local _tilteCtl
 local _title_prefix = "RF2-Touch"
@@ -76,13 +76,13 @@ local _fcInfo = {
 }
 
 -- -------------------------------------------------------------------
-local modalWatingParams = nil
+local modalWaitingParams = nil
 
-local function modalWatingStart(text, timeout, retryCount, callbackRetry, callbackGaveup)
-    log("modalWating: modalWatingStart(%s)", text)
+local function modalWaitingStart(text, timeout, retryCount, callbackRetry, callbackGaveup)
+    log("modalWaiting: modalWaitingStart(%s)", text)
 
-    local panel = libGUI.newPanel("modalWating")
-    modalWatingCtl = panel.newControl.ctl_waiting_dialog(panel, nil, {
+    local panel = libGUI.newPanel("modalWaiting")
+    modalWaitingCtl = panel.newControl.ctl_waiting_dialog(panel, nil, {
         text = text,
         textOrg = text,
         timeout = timeout,
@@ -93,25 +93,19 @@ local function modalWatingStart(text, timeout, retryCount, callbackRetry, callba
         panel = nil,
     })
 
-    modalWatingPanel = panel
-    panel.showPrompt(modalWatingPanel)
+    modalWaitingPanel = panel
+    panel.showPrompt(modalWaitingPanel)
 
 end
 
-local function saveSettings()
-    if Page.values then
-        local payload = Page.values
-        if Page.preSave then
-            payload = Page.preSave(Page)
-        end
-        rf2.protocol.mspWrite(Page.write, payload)
-        saveTS = getTime()
-        if pageState == pageStatus.saving then
-            saveRetries = saveRetries + 1
-        else
-            pageState = pageStatus.saving
-            saveRetries = 0
-        end
+rf2.saveSettings = function()
+    Page.write(Page)
+    saveTS = rf2.clock()
+    if pageState == pageStatus.saving then
+        saveRetries = saveRetries + 1
+    else
+        pageState = pageStatus.saving
+        saveRetries = 0
     end
 end
 
@@ -123,10 +117,20 @@ local function invalidatePages()
     isFiledsNeedToSave = false
     collectgarbage()
 end
+local function invalidatePagesLite()
+    -- Page = nil
+    panelFieldsPage = nil
+    pageState = pageStatus.display
+    saveTS = 0
+    isFiledsNeedToSave = false
+    collectgarbage()
+end
+
+rf2.reloadPage = invalidatePages
 
 local function rebootFc()
-    -- rf2.print("Attempting to reboot the FC...")
-    -- pageState = pageStatus.rebooting
+    --rf2.print("Attempting to reboot the FC...")
+    pageState = pageStatus.rebooting
     rf2.mspQueue:add({
         command = 68, -- MSP_REBOOT
         processReply = function(self, buf)
@@ -136,86 +140,56 @@ local function rebootFc()
     })
 end
 
-local mspEepromWrite = {
-    command = 250, -- MSP_EEPROM_WRITE, fails when armed
-    processReply = function(self, buf)
-        if Page.reboot then
-            rebootFc()
-        else
-            invalidatePages()
+rf2.settingsSaved = function()
+    -- check if this page requires writing to eeprom to save (most do)
+    if Page and Page.eepromWrite then
+        -- don't write again if we're already responding to earlier page.write()s
+        if pageState ~= pageStatus.eepromWrite then
+            pageState = pageStatus.eepromWrite
+            local mspEepromWrite =
+            {
+                command = 250, -- MSP_EEPROM_WRITE, fails when armed
+                processReply = function(self, buf)
+                    if Page.reboot then
+                        rebootFc()
+                    else
+                        invalidatePages()
+                    end
+                end,
+                errorHandler = function(self)
+                    if rf2.apiVersion >= 12.08 then
+                        if not rf2.saveWarningShown then
+                            rf2.displayMessage("Save warning", "Settings will be saved\nafter disarming.")
+                            rf2.saveWarningShown = true
+                        else
+                            invalidatePages()
+                        end
+                    else
+                        rf2.displayMessage("Save error", "Make sure your heli\nis disarmed.")
+                    end
+                end,
+                simulatorResponse = {}
+            }
+            rf2.mspQueue:add(mspEepromWrite)
         end
-    end,
-    simulatorResponse = {}
-}
+    elseif pageState ~= pageStatus.eepromWrite then
+        -- If we're not already trying to write to eeprom from a previous save, then we're done.
 
-local function eepromWrite()
-    rf2.mspQueue:add(mspEepromWrite)
-end
-
-rf2.dataBindFields = function()
-    for i = 1, #Page.fields do
-        if #Page.values >= Page.minBytes then
-            local f = Page.fields[i]
-            if f.vals then
-                f.value = 0
-                for idx = 1, #f.vals do
-                    local raw_val = Page.values[f.vals[idx]] or 0
-                    raw_val = bit32.lshift(raw_val, (idx - 1) * 8)
-                    f.value = bit32.bor(f.value, raw_val)
-                end
-                local bits = #f.vals * 8
-                if f.min and f.min < 0 and bit32.btest(f.value, bit32.lshift(1, bits - 1)) then
-                    f.value = f.value - (2 ^ bits)
-                end
-                f.value = f.value / (f.scale or 1)
-            end
-        end
+        invalidatePages()
     end
 end
 
 -- ---------------------------------------------------------------------
--- old msp handling
-local mspLoadSettings = {
-    processReply = function(self, buf)
-        if not Page then return end -- could happen if one returns to the main menu before processReply
-        rf2.print("Page is processing reply for cmd "..tostring(self.command).." len buf: "..#buf.." expected: "..Page.minBytes)
-        Page.values = buf
-        if Page.postRead then
-            if Page.postRead(Page) == -1 then
-                Page.values = nil
-                return
-            end
-        end
-        rf2.dataBindFields()
-        if Page.postLoad then
-            Page.postLoad(Page)
-        end
-
-        Page.isReady = true
-    end
-}
-
-rf2.readPage = function()
-    collectgarbage()
-
-    if type(Page.read) == "function" then
-        log("readPage: new way [%s]", Page.title)
-        Page.read(Page)
-    else
-        log("readPage: old way [%s]", Page.title)
-        mspLoadSettings.command = Page.read
-        mspLoadSettings.simulatorResponse = Page.simulatorResponse
-        rf2.mspQueue:add(mspLoadSettings)
-    end
-end
 
 local function requestPage()
-    if not Page.reqTS or Page.reqTS + 2 <= rf2.clock() then
+    if not Page.reqTS or Page.reqTS + 5 <= rf2.clock() then
         log("Requesting page... (%s)", Page.title)
         -- Page.reqTS = rf2.clock()
-        if Page.read then
-            rf2.readPage()
-        end
+        -- if Page.read then
+        --     rf2.readPage()
+        -- end
+        log("readPage: new way [%s]", Page.title)
+        Page.read(Page)
     end
 end
 
@@ -354,21 +328,29 @@ end
 local function updateValueChange(fieldId, newVal)
     log("number_as_button: updateValueChange(i=%s, newVal=%s)", fieldId, newVal)
     local f = Page.fields[fieldId]
-    local scale = f.scale or 1
-    local mult = f.mult or 1
-    -- f.value = clipValue(newVal/scale, (f.min or 0)/scale, (f.max or 255)/scale)
-    f.value = clipValue(newVal, (f.min or 0), (f.max or 255))
-    f.value = math.floor(f.value * scale / mult + 0.5) * mult / scale
+    local scale = f.data.scale or 1
+    local mult = f.data.mult or 1
+    local min = f.data.min or 0
+    local max = f.data.max or 255
+    f.data.value = clipValue(newVal*scale, min, max)
+    f.data.value = math.floor(f.data.value/mult + 0.5)*mult
+    -- f.data.value = math.floor(f.data.value * scale / mult + 0.5) * mult / scale
+
+    log("updateValueChange: [%s] %s, %s, scale:%s, mult:%s", f.t, f.data.value, f.data.scale, scale, mult)
 
     if f.vals == nil then
         return
     end
     for idx = 1, #f.vals do
-        Page.values[f.vals[idx]] = bit32.rshift(math.floor(f.value * scale + 0.5), (idx - 1) * 8)
+        Page.values[f.vals[idx]] = bit32.rshift(math.floor(f.data.value * scale + 0.5), (idx - 1) * 8)
     end
     if f.upd and Page.values then
         f.upd(Page)
     end
+end
+
+local function fieldIsButton(f)
+    return f.t and string.sub(f.t, 1, 1) == "[" and not f.data
 end
 
 local function buildFieldsPage()
@@ -400,7 +382,7 @@ local function buildFieldsPage()
         onPress=function()
             log("reload-data: %s", Page.title)
             log("reloading data: %s", Page.title)
-            modalWatingStart("Reloading data...", 150, 0)
+            modalWaitingStart("Reloading data...", 150, 0)
             invalidatePages()
         end
     })
@@ -410,21 +392,20 @@ local function buildFieldsPage()
         onPress=function()
             log("saveSettings: %s", Page.title)
 
-            saveSettings()
+            rf2.saveSettings()
 
-            modalWatingStart(
+            modalWaitingStart(
                 "Saving page fields...",
                 rf2.protocol.saveTimeout,
-                rf2.protocol.maxRetries+1,
+                0, -- rf2.protocol.maxRetries+1,
                 function()
-                    log("modalWating: Retry")
-                    saveSettings()
+                    log("modalWaiting: Retry")
+                    rf2.saveSettings()
                 end,
                 function()
-                    log("modalWating: gaveup")
+                    log("modalWaiting: done")
                 end
             )
-
         end
     })
     -- btnSave.disabled = true
@@ -483,10 +464,17 @@ local function buildFieldsPage()
         end
         -- end label merging ----------------------------
 
-        local txt2 = string.format("%s \n%s%s", txt, f.value, units)
+        local txt2 = string.format("%s \n%s%s", txt, f.data.value, units)
+        local isVisible = f.visible == nil or f.visible==true
 
-        if f.label == true then
-            col_id = 0
+        if isVisible == false then
+            -- do nothing
+        elseif fieldIsButton(f) then
+            -- button
+            log("buildFieldsPage: i=%s, button: %s", i, txt)
+
+        elseif f.label == true then
+                col_id = 0
             y = last_y
             libGUI.newControl.ctl_label(panelFieldsPage, txt, {x=x, y=y, w=val_w, h=h, text=txt})
             y = y + lineSpacingLabel
@@ -507,14 +495,14 @@ local function buildFieldsPage()
             libGUI.newControl.ctl_label(panelFieldsPage, txt, {x=x, y=y, w=0, h=h, text=txt})
             log("buildFieldsPage: i=%s, table0: %s, table1: %s (total: %s)", i, theItems[0], theItems[1], #theItems)
             libGUI.newControl.ctl_dropdown(panelFieldsPage, txt,
-                {x=val_x, y=y, w=val_w, h=h, items=theItems, selected=f.value,
+                {x=val_x, y=y, w=val_w, h=h, items=theItems, selected=f.data.value,
                     callback=function(ctl)
                         if f.postEdit then
                             f.postEdit(Page)
                         end
                         local selected1 = ctl.getSelected()
                         local selected0or1based = panelFieldsPage._.tableBasedX_convertSelectedTo0or1Based(selected1, ctl.items0or1)
-                        -- log("buildFieldsPage222: i=%s, selected1: %s, selected0or1based: %s", i, selected1, selected0or1based)
+                        -- log("buildFieldsPage: i=%s, selected1: %s, selected0or1based: %s", i, selected1, selected0or1based)
                         updateValueChange(i, selected0or1based)
                     end
                 } )
@@ -534,15 +522,19 @@ local function buildFieldsPage()
                 units = ctl_fieldsInfo[f.id].units or ""
             end
 
-            local min = f.min or (f.data and f.data.min) or 0
-            local max = f.min or (f.data and f.data.max) or 0
-            log("number_as_button: i=%s, txt=%s, min:%s,max:%s,scale:%s, mult:%s, steps=%s, raw-val: %s", i, txt, f.min, f.max, f.scale, f.mult, (1/(f.scale or 1))*(f.mult or 1), f.value)
+            local min = f.data.min or 0
+            local max = f.data.max or 0
+            local scale  = f.data.scale or 1
+            local mult  = f.data.mult or 1
+            local val  = f.data.value / scale
+            local stp = mult / scale
+            log("8888number_as_button: i=%s, txt=%s, min:%s,max:%s,scale:%s, mult:%s, steps=%s, raw-val: %s, val: %s", i, txt, min, max, scale, mult, mult/scale, f.data.value, val)
             libGUI.newControl.ctl_rf2_button_number(panelFieldsPage, txt, {
                 x=x_Temp, y=y, w=150, h=h_btn,
-                min = f.min and f.min / (f.scale or 1),
-                max = f.max and f.max / (f.scale or 1),
-                steps = (1 / (f.scale or 1)) * (f.mult or 1),
-                value = f.value,
+                min = min and min / scale,
+                max = max and max / scale,
+                steps = stp,
+                value = val,
                 units = units,
                 text = txt,
                 text_long = txt_long,
@@ -680,7 +672,7 @@ local function run_ui_pages(event, touchState)
 
     if Page and Page.timer and (not Page.lastTimeTimerFired or Page.lastTimeTimerFired + 0.5 < rf2.clock()) then
         Page.lastTimeTimerFired = rf2.clock()
-        log("triggering timer on page: %s", Page.title)
+        -- log("triggering timer on page: %s", Page.title)
         Page.timer(Page)
     end
 
@@ -706,7 +698,7 @@ local function run_ui_pages(event, touchState)
 
     if panelFieldsPage then
         panelFieldsPage.draw()
-        if modalWatingPanel == nil then
+        if modalWaitingPanel == nil then
             panelFieldsPage.onEvent(event, touchState)
         end
     end
@@ -718,7 +710,7 @@ local function onProcessedMspStatus(aaa, mspStatusRes)
     _fcInfo.bank = mspStatusRes.profile + 1
     _fcInfo.rateProfile = mspStatusRes.rateProfile + 1
 
-    rf2.log("onProcessedMspStatus()-> B:%s, R:%s", _fcInfo.bank, _fcInfo.rateProfile)
+    -- rf2.log("onProcessedMspStatus()-> B:%s, R:%s", _fcInfo.bank, _fcInfo.rateProfile)
     refreshTitle()
 end
 
@@ -737,7 +729,7 @@ local function run_ui(event, touchState)
     local status_interval = 1.5
     if (not _statusTimer_LastTimeFired or _statusTimer_LastTimeFired + status_interval < rf2.clock()) then
         _statusTimer_LastTimeFired = rf2.clock()
-        log("triggering _statusTimer_LastTimeFired")
+        -- log("triggering _statusTimer_LastTimeFired")
 
         if rf2.mspQueue:isProcessed() then
             mspStatusApi.getStatus(onProcessedMspStatus, self)
@@ -767,15 +759,15 @@ local function run_ui(event, touchState)
 
     end
 
-    if modalWatingPanel then
-        local isRetryEnd = modalWatingCtl.calc()
-        modalWatingPanel.draw()
+    if modalWaitingPanel then
+        local isRetryEnd = modalWaitingCtl.calc()
+        modalWaitingPanel.draw()
         if isRetryEnd then
             -- btnSave.disabled = true
             -- btnReload.disabled = true
             libGUI.dismissPrompt()
-            modalWatingPanel = nil
-            invalidatePages()
+            modalWaitingPanel = nil
+            invalidatePagesLite() -- invalidatePages()
         end
     end
 

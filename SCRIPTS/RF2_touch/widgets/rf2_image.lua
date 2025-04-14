@@ -1,10 +1,11 @@
 local app_name = "rf2_image"
-local app_ver = "0.4"
 
-local NA_IMAGE_NAME = "img/rf2_image_def.png"
-
-local options = {}
 local is_first_time = true
+local baseDir = "/SCRIPTS/RF2_touch/"
+
+local NA_IMAGE_NAME = "widgets/img/rf2_image_def.png"
+local na_img
+
 
 local function log(fmt, ...)
     print(string.format("[%s] "..fmt, app_name, ...))
@@ -26,6 +27,10 @@ local function update(wgt, options)
     wgt.last_craftName = nil
     wgt.last_image_name = nil
     wgt.is_image_exist = nil
+
+    local img = bitmap.open(baseDir..NA_IMAGE_NAME)
+    na_img = bitmap.resize(img, wgt.zone.w,wgt.zone.h)
+    assert(na_img, "Failed to load image: " .. baseDir..NA_IMAGE_NAME)
 end
 
 local function create(zone, options)
@@ -40,18 +45,12 @@ end
 local function background(wgt)
 end
 
--- local t1 = getTime() / 100
-
-local function getCraftNameFromMsp(wgt)
+local function getCraftName(wgt)
+    -- get the craft name from the rf2fc (msp)
     local is_avail = false
     if rf2fc ~= nil and rf2fc.mspCacheTools ~= nil then
         is_avail, err = rf2fc.mspCacheTools.isCacheAvailable()
     end
-
-    -- local t2 = getTime() / 100
-    -- if (t2 - t1) > 10 then
-    --     return "sab570"
-    -- end
 
     local craftName
     if is_avail == true then
@@ -61,14 +60,24 @@ local function getCraftNameFromMsp(wgt)
         return craftName
     else
         log("msp cache is NOT available")
-        return nil
+        return "---"
     end
 end
 
 local function loadImage(wgt, craftName)
     -- local imageName = craftName~=nil and "/IMAGES/" .. craftName .. ".png" or "---"
+    if craftName == "---" then
+        wgt.img = nil
+        collectgarbage()
+        wgt.img = na_img
+        wgt.last_craftName = craftName
+        wgt.last_image_name = NA_IMAGE_NAME
+        wgt.is_image_exist = true
+        return
+    end
+
     local imageName = "/IMAGES/" .. craftName .. ".png"
-    wgt.last_image_name = imageName
+    -- wgt.last_image_name = imageName
 
     if fileExists(imageName) then
         wgt.is_image_exist = true
@@ -78,10 +87,20 @@ local function loadImage(wgt, craftName)
         wgt.is_image_exist = false
     end
 
-    wgt.img = bitmap.open(imageName)
-    wgt.img = bitmap.resize(wgt.img, wgt.zone.w,wgt.zone.h)
+    wgt.img = nil
+    collectgarbage()
+    local img = bitmap.open(imageName)
+    wgt.img = bitmap.resize(img, wgt.zone.w,wgt.zone.h)
+    assert(wgt.img, "Failed to load image: " .. imageName)
+
+    -- if wgt.img == nil then
+    --     log("Failed to load image for model: %s", imageName)
+    --     wgt.img = na_img
+    --     wgt.is_image_exist = false
+    -- end
 
     wgt.last_craftName = craftName
+    wgt.last_image_name = imageName
     log("Loaded image for model: %s=%s", craftName, imageName)
     collectgarbage()
 end
@@ -91,27 +110,19 @@ local function refresh(wgt, event, touchState)
     if (wgt == nil) then return end
     if (wgt.options == nil) then return end
 
-    local newCraftName = getCraftNameFromMsp(wgt)
+    local newCraftName = getCraftName(wgt)
     -- log("newCraftName: %s", newCraftName)
-
-    if newCraftName == nil then
-        if wgt.last_craftName==nil then
-            newCraftName = wgt.last_craftName
-        end
-    end
-
-    if newCraftName == nil then
-        newCraftName = "---"
-    end
 
     if newCraftName ~= wgt.last_craftName then
         log("model changed, %s --> %s", wgt.last_craftName, newCraftName)
         loadImage(wgt, newCraftName)
     end
 
+    assert(wgt.img, "image is nil")
     lcd.drawBitmap(wgt.img, 0, 0)
-    if wgt.last_craftName == "---" then
-        lcd.drawText(0, 0, "No connection, so not image", 0 + GREY + BLINK)
+
+    if rf2fc.msp.ctl.connected == false then
+        lcd.drawText(0, 0, "Heli not connected", 0 + GREY + BLINK)
     elseif wgt.is_image_exist == false then
         lcd.drawText(0, 0, string.format("No Image for: [%s]", wgt.last_craftName), 0 + BOLD + RED + BLINK)
         lcd.drawText(0, 20, wgt.last_image_name, SMLSIZE)
@@ -119,4 +130,4 @@ local function refresh(wgt, event, touchState)
 
 end
 
-return {name=app_name, options=options, create=create, update=update, background=background, refresh=refresh}
+return {name=app_name, create=create, update=update, background=background, refresh=refresh}

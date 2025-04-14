@@ -2,7 +2,7 @@
 -- args: x, y, w, h, text, text_long, f, units, steps
 
 function ctl_rf2_button_number(panel, id, args, flags)
-    panel.log("number_as_button.new(%s, min:%s, max:%s, steps:%s)", id, args.min, args.max, args.steps)
+    --panel.log("number_as_button.new(%s, min:%s, max:%s, steps:%s, value:%s)", id, args.min, args.max, args.steps, args.value)
     local self = {
         disabled = false,
         editable = true,
@@ -22,7 +22,7 @@ function ctl_rf2_button_number(panel, id, args, flags)
         value = args.value or -1,
         initiatedValue = args.value or -1,
         units = args.units,
-        steps = args.steps or 1,
+        steps = (args.steps >= 1) and math.floor(args.steps) or tonumber(args.steps),
         -- bg_color = args.bg_color,
         onValueUpdated = args.onValueUpdated or panel.doNothing,
         callbackOnModalActive = args.callbackOnModalActive or panel.doNothing,
@@ -37,6 +37,19 @@ function ctl_rf2_button_number(panel, id, args, flags)
         return self.value ~= self.initiatedValue
     end
 
+    function self.format_val(v)
+        local txt
+        if self.steps < 0.1 then
+            txt = string.format("%.2f", v)
+        elseif self.steps < 1 then
+            txt = string.format("%.1f", v)
+        else
+            txt = string.format("%.0f", v)
+        end
+        -- panel.log("n_val(%s) = %s (steps: %s)", v, txt, self.steps)
+        return txt
+    end
+
     local function drawButton()
         local x,y,w,h = self.x, self.y, self.w,self.h
         panel.drawFilledRectangle(x, y, w, h, panel.colors.btn.bg)
@@ -46,7 +59,7 @@ function ctl_rf2_button_number(panel, id, args, flags)
             panel.drawText(x + w / 2, y1, self.text, panel.colors.btn.txt + CENTER)
             y1 = y1 + 20
         end
-        local val_txt = string.format("%s%s", self.value, self.units)
+        local val_txt = string.format("%s%s", self.format_val(self.value), self.units)
         panel.drawText(x + w / 2, y1, val_txt, panel.colors.secondary1 + CENTER)
 
         -- draw progress bar

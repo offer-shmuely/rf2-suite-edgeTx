@@ -8,9 +8,7 @@ local timerNumber = 1
 local err_img = bitmap.open(baseDir.."widgets/img/no_connection_wr.png")
 -- err_img = bitmap.resize(err_img, wgt.zone.w, wgt.zone.h)
 
-local craft_image = bitmap.open("/IMAGES/sab580.png")
-local craft_image = bitmap.resize(craft_image, 160,100)
-
+local craft_image
 
 --------------------------------------------------------------
 local function log(fmt, ...)
@@ -31,6 +29,19 @@ local function tableToString(tbl)
     end
     return table.concat(result, ", ")
 end
+
+local function isFileExist(file_name)
+    rf2.log("is_file_exist()")
+    local hFile = io.open(file_name, "r")
+    if hFile == nil then
+        rf2.log("file not exist - %s", file_name)
+        return false
+    end
+    io.close(hFile)
+    rf2.log("file exist - %s", file_name)
+    return true
+end
+
 -----------------------------------------------------------------------------------------------------------------
 
 local function update(wgt, options)
@@ -54,7 +65,11 @@ local function update(wgt, options)
         cell_percent = -1,
         volt = -1,
         curr = -1,
+        curr_max = -1,
         curr_str = "-1",
+        curr_max_str = "-1",
+        curr_percent = -1,
+        curr_max_percent = -1,
         capaTotal = -1,
         capaUsed = -1,
         capaPercent = -1,
@@ -63,13 +78,20 @@ local function update(wgt, options)
         bb_enabled = true,
         bb_percent = 0,
         bb_size = 0,
+        bb_txt = "Blackbox: --% 0MB",
         rescue_on = false,
         rescue_txt = "--",
-        bb_txt = "Blackbox: --% 0MB",
         is_arm = false,
         arm_fail = false,
         arm_disable_flags_list = nil,
         arm_disable_flags_txt = "",
+
+        img_last_name = "---",
+        img_craft_name_for_image = "---",
+        img_box_1 = nil,
+        img_replacment_area1 = nil,
+        img_box_2 = nil,
+        img_replacment_area2 = nil,
 
         thr_max = -1,
     }
@@ -277,7 +299,7 @@ local function updateCapa(wgt)
         wgt.values.capaTotal = -1
         wgt.values.capaUsed = 0
     end
-    wgt.values.capaPercent = math.floor(100 * (wgt.values.capaTotal - wgt.values.capaUsed) // wgt.values.capaTotal)
+    wgt.values.capaPercent = math.floor(100 * (wgt.values.capaTotal - wgt.values.capaUsed) / wgt.values.capaTotal)
     local p = wgt.values.capaPercent
     if (p < 10) then
         wgt.values.capaColor = RED
@@ -348,9 +370,11 @@ local  function updateArm(wgt)
 end
 
 local function updateThr(wgt)
-    local id = getSourceIndex("CH3") --????
-    local val = (getValue(id)+1024)*100//2048
-    wgt.values.thr_max = math.max(wgt.values.thr_max, val)
+    wgt.values.thr = getValue("Thr")
+    wgt.values.thr_max = getValue("Thr+")
+    -- local id = getSourceIndex("CH3") --????
+    -- local val = (getValue(id)+1024)*100//2048
+    -- wgt.values.thr_max = math.max(wgt.values.thr_max, val)
 end
 
 local function updateTemperature(wgt)
@@ -364,7 +388,34 @@ local function updateTemperature(wgt)
 end
 
 
+local function updateImage(wgt)
+    local newCraftName = wgt.values.craft_name
+    if newCraftName == wgt.values.img_craft_name_for_image then
+        return
+    end
 
+    local imageName = "/IMAGES/"..newCraftName..".png"
+
+    if isFileExist(imageName) ==false then
+        imageName = "/IMAGES/".. model.getInfo().bitmap
+
+        if imageName == "" or isFileExist(imageName) ==false then
+            imageName = baseDir.."widgets/img/rf2_logo.png"
+        end
+
+    end
+
+    if imageName ~= wgt.values.img_last_name then
+        log("updateImage - model changed, %s --> %s", wgt.values.img_last_name, imageName)
+
+        -- image replacment
+        craft_image = bitmap.open(imageName)
+        craft_image = bitmap.resize(craft_image, 160,100)
+        wgt.values.img_last_name = imageName
+        wgt.values.img_craft_name_for_image = newCraftName
+    end
+
+end
 
 local function background(wgt)
 end
@@ -382,14 +433,16 @@ local function refresh(wgt, event, touchState)
     if rf2fc ~= nil and rf2fc.mspCacheTools ~= nil then
         is_avail, err = rf2fc.mspCacheTools.isCacheAvailable()
     end
-    wgt.mspTool = rf2fc.mspCacheTools
 
     if is_avail == false then
         lcd.drawText(60 ,5, "Rotorflight Dashboard", FS.FONT_12 + WHITE)
-        lcd.drawText(110 ,170, err, FS.FONT_8 + WHITE)
+        lcd.drawText(140 ,170, err, FS.FONT_8 + WHITE)
         lcd.drawBitmap(err_img, 150, 40)
         return
     end
+
+    wgt.mspTool = rf2fc.mspCacheTools
+
 
     updateCraftName(wgt)
     updateTimeCount(wgt)
@@ -404,6 +457,7 @@ local function refresh(wgt, event, touchState)
     updateArm(wgt)
     updateThr(wgt)
     updateTemperature(wgt)
+    updateImage(wgt)
 
 
     -- profile
@@ -442,7 +496,7 @@ local function refresh(wgt, event, touchState)
 
     -- capacity
     x, y = 5, 132
-    rf2.log("capacity capaPercent: %s, Total: %s", wgt.values.capaPercent, wgt.values.capaTotal)
+    -- rf2.log("capacity capaPercent: %s, Total: %s", wgt.values.capaPercent, wgt.values.capaTotal)
     lcd.drawText(x, y -12, string.format("Capacity (Total: %s)", wgt.values.capaTotal), FS.FONT_6 + WHITE)
     drawBlackboxHorz(wgt, {x=x, y=y+5,w=140,h=35,segments_w=20, color=WHITE, bg_color=GREY, cath_w=10, cath_h=30, segments_h=20, cath=false},
         wgt.values.capaPercent
@@ -479,8 +533,9 @@ local function refresh(wgt, event, touchState)
     x, y = 350, 160
     if wgt.values.bb_enabled then
         lcd.drawText(x, y, wgt.values.bb_txt, FS.FONT_6 + WHITE)
-        drawBlackboxHorz(wgt, {x=x,y=y+20,w=75,h=20,segments_w=10, color=WHITE, bg_color=GREY, cath_w=10, cath_h=80, segments_h=20, cath=false},
-        wgt.values.bb_percent,
+        drawBlackboxHorz(wgt,
+            {x=x,y=y+20,w=75,h=20,segments_w=10, color=WHITE, bg_color=GREY, cath_w=10, cath_h=80, segments_h=20, cath=false},
+            wgt.values.bb_percent,
             function()
                 return wgt.values.bbColor
             end
@@ -523,9 +578,11 @@ local function refresh(wgt, event, touchState)
     end
 
 
-    -- craft image
+    -- image
     -- lcd.drawFilledRectangle(LCD_W-100, 0, 100, 100, GREY)
-    lcd.drawBitmap(craft_image, LCD_W-160, 0)
+    if craft_image~=nil then
+        lcd.drawBitmap(craft_image, LCD_W-160, 0)
+    end
 
 
     -- if rf2fc.msp.cache.mspStatus.flightModeFlags then

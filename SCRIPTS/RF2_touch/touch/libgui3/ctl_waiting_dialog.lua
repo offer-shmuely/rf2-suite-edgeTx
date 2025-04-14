@@ -1,7 +1,7 @@
 -- args:
 
 function ctl_waiting_dialog(panel, id, args)
-    panel.log("modalWating(%s) %s", id, args)
+    panel.log("modalWaiting(%s) %s", id, args)
     local self = {
         -- flags = bit32.bor(flags or panel.flags, CENTER, VCENTER),
         flags = bit32.bor(panel.flags or panel.default_flags),
@@ -26,11 +26,11 @@ function ctl_waiting_dialog(panel, id, args)
     }
     --  print all args
     for k,v in pairs(args) do
-        panel.log("modalWating args %s=%s", k, v)
+        panel.log("modalWaiting args %s=%s", k, v)
     end
 
     function self.calc()
-        -- panel.log("modalWating calc %s/%s retry:%s/%s", getTime() - self.startTS, self.timeout,  self.retries, self.retryCount)
+        -- panel.log("modalWaiting calc %s/%s retry:%s/%s", getTime() - self.startTS, self.timeout,  self.retries, self.retryCount)
         if getTime() - self.startTS > self.timeout then
             if self.retries < self.retryCount then
                 self.onRetry()
