@@ -57,7 +57,7 @@ local function update(wgt, options)
         craft_name = "-------",
         timer_str = "--:--",
         rpm = -1,
-        rpm_str = "-1",
+        rpm_str = "---",
         profile_id = -1,
         profile_id_str = "--",
         rate_id = -1,
@@ -76,6 +76,7 @@ local function update(wgt, options)
         capaTotal = -1,
         capaUsed = -1,
         capaPercent = -1,
+        capaPercent_txt = "---",
 
         governor_str = "-------",
         bb_enabled = true,
@@ -256,7 +257,7 @@ build_ui = function(wgt)
 
     -- craft name
     local pCraftName = pMain:box({x=160, y=160})
-    pCraftName:label({text="Heli Name",  x=0, y=0, font=FS.FONT_6, color=WHITE})
+    pCraftName:label({text="Heli Name",  x=0, y=0, font=FS.FONT_6, color=GREY})
     pCraftName:label({text=function() return wgt.values.craft_name end,  x=0, y=15, font=FS.FONT_12 ,color=(wgt.options.guiStyle~=2 and ORANGE or txtColor)})
 
 
@@ -264,7 +265,7 @@ build_ui = function(wgt)
     pMain:build({{type="box", x=0, y=0,
         children={
             -- {type="rectangle", x=0, y=0, w=40, h=50, color=YELLOW},
-            {type="label", text="Bank", x=0, y=0, font=FS.FONT_6, color=WHITE},
+            {type="label", text="Bank", x=0, y=0, font=FS.FONT_6, color=GREY},
             {type="label", text=function() return wgt.values.profile_id_str end , x=6, y=10, font=FS.FONT_16 ,color=(wgt.options.guiStyle~=2 and BLUE or txtColor)},
         }
     }})
@@ -273,7 +274,7 @@ build_ui = function(wgt)
     pMain:build({{type="box", x=44, y=0,
         children={
             -- {type="rectangle", x=0, y=0, w=40, h=50, color=YELLOW},
-            {type="label", text="Rate", x=0, y=0, font=FS.FONT_6, color=WHITE},
+            {type="label", text="Rate", x=0, y=0, font=FS.FONT_6, color=GREY},
             {type="label", text=function() return wgt.values.rate_id_str end , x=2, y=10, font=FS.FONT_16 ,color=(wgt.options.guiStyle~=2 and ORANGE or txtColor)},
         }
     }})
@@ -281,7 +282,7 @@ build_ui = function(wgt)
     -- batt profile
     pMain:build({{type="box", x=86, y=0,
         children={
-            {type="label", text="Batt", x=0, y=0, font=FS.FONT_6, color=WHITE},
+            {type="label", text="Batt", x=0, y=0, font=FS.FONT_6, color=GREY},
             {type="label", text=function() return "1" end , x=2, y=10, font=FS.FONT_16 ,color=(wgt.options.guiStyle~=2 and YELLOW or txtColor)},
         }
     }})
@@ -296,14 +297,14 @@ build_ui = function(wgt)
     -- rpm
     pMain:build({{type="box", x=185, y=120,
         children={
-            {type="label", text="RPM",  x=25, y=0, font=FS.FONT_6, color=WHITE},
+            {type="label", text="RPM",  x=25, y=0, font=FS.FONT_6, color=GREY},
             {type="label", text=function() return wgt.values.rpm_str end, x=0, y=10, font=FS.FONT_16 ,color=WHITE},
         }
     }})
 
     -- voltage
     local bVolt = pMain:box({x=5, y=55})
-    bVolt:label({text="Battery", x=0, y=0, font=FS.FONT_6, color=WHITE})
+    bVolt:label({text="Battery", x=0, y=0, font=FS.FONT_6, color=GREY})
     bVolt:label({text=function() return string.format("%.02fv", wgt.values.volt) end , x=0, y=12, font=FS.FONT_16 ,color=WHITE})
     buildBlackboxHorz(bVolt, wgt,
         {x=0, y=48,w=110,h=15,segments_w=20, color=WHITE, bg_color=GREY, cath_w=10, cath_h=8, segments_h=20, cath=true, fence_thickness=1},
@@ -319,12 +320,12 @@ build_ui = function(wgt)
         function(wgt) return wgt.values.capaPercent end,
         function(wgt) return wgt.values.capaColor end
     )
-    bCapa:label({text=function() return string.format("%d%%", wgt.values.capaPercent) end, x=25, y=16, font=FS.FONT_16 ,color=WHITE})
+    bCapa:label({text=function() return wgt.values.capaPercent_txt end, x=25, y=16, font=FS.FONT_16 ,color=WHITE})
     -- bCapa:label({text=function() return string.format("%dmah", wgt.values.capaTotal) end, x=5, y=18, font=FS.FONT_8 ,color=WHITE})
 
     -- current
     local bCurr = pMain:box({x=350, y=110})
-    bCurr:label({text="Current",  x=0, y=0, font=FS.FONT_6, color=WHITE})
+    bCurr:label({text="Current",  x=0, y=0, font=FS.FONT_6, color=GREY})
     -- bCurr:label({text=function() return wgt.values.curr_str end, x=0, y=12, font=FS.FONT_16 ,color=function() return (wgt.values.curr < 100) and YELLOW or RED end },
     bCurr:label({text=function() return wgt.values.curr_str end, x=0, y=12, font=FS.FONT_16 ,color=(wgt.options.guiStyle~=2 and YELLOW or txtColor)})
 
@@ -338,7 +339,7 @@ build_ui = function(wgt)
 
     -- blackbox
     local bBB = pMain:box({type="box", x=350, y=160, visible=function() return wgt.values.bb_enabled end})
-    bBB:label({text=function() return wgt.values.bb_txt end,  x=0, y=0, font=FS.FONT_6, color=function() return (wgt.values.bb_percent < 90) and WHITE or RED end })
+    bBB:label({text=function() return wgt.values.bb_txt end,  x=0, y=0, font=FS.FONT_6, color=function() return (wgt.values.bb_percent < 90) and GREY or RED end })
     buildBlackboxHorz(bBB, wgt,
         {x=0, y=15,w=110,h=15,segments_w=10, color=WHITE, bg_color=GREY, cath_w=10, cath_h=80, segments_h=20, cath=false, fence_thickness=2},
         function(wgt) return wgt.values.bb_percent end,
@@ -375,10 +376,10 @@ build_ui = function(wgt)
     })
 
     -- failed to arm flags
-    pMain:build({{type="box", x=150, y=40, visible=function() return wgt.values.arm_fail end,
+    pMain:build({{type="box", x=150, y=45, visible=function() return wgt.values.arm_fail end,
         children={
-            {type="rectangle", x=0, y=0, w=150, h=180, color=RED, filled=true, rounded=8},
-            {type="label", text=function() return wgt.values.arm_disable_flags_txt end, x=10, y=0, font=FS.FONT_8, color=WHITE, visible=function() return wgt.values.arm_fail end},
+            {type="rectangle", x=0, y=0, w=280, h=150, color=RED, filled=true, rounded=8, opacity=245},
+            {type="label", text=function() return wgt.values.arm_disable_flags_txt end, x=10, y=0, font=FS.FONT_8, color=WHITE},
         }
     }})
 
@@ -403,24 +404,16 @@ build_ui = function(wgt)
 
 
     -- no connection
-    local lytNoConnection = {
-        {type="box", x=0, y=0, name="panelError",
-            visible=function() return wgt.is_connected==false end,
-            children={
-                {type="label", x=60, y=5, text="Rotorflight Dashboard", font=FS.FONT_12, color=WHITE, name="label1"},
-                {type="label", x=140, y=170, text=function() return wgt.not_connected_error end , font=FS.FONT_8, color=WHITE},
-                {type="image", x=150, y=40, w=128, h=128, file=baseDir.."widgets/img/no_connection_wr.png"},
-            }
-        }
-    }
-    local panelNoConnection = lvgl.build(lytNoConnection)
+    local bNoConn = lvgl.box({x=0, y=0, visible=function() return wgt.is_connected==false end})
+    bNoConn:label({x=100,  y=5,   text="Rotorflight Dashboard", font=FS.FONT_12, color=WHITE})
+    bNoConn:label({x=140, y=170, text=function() return wgt.not_connected_error end , font=FS.FONT_8, color=WHITE})
+    bNoConn:image({x=150, y=40, w=128, h=128, file=baseDir.."widgets/img/no_connection_wr.png"})
 
 end
 
 build_ui_modern = function(wgt)
     if (wgt == nil) then log("refresh(nil)") return end
-    if (wgt.options == nil) then log("refresh(wgt.options=nil)") return end
-    local txtColor = BLUE
+    local txtColor = WHITE
 
     -- local ts_w, ts_h = lcd.sizeText(num_flights, font_size)
     local dx = 20 --(zone_w - ts_w) / 2
@@ -430,7 +423,9 @@ build_ui_modern = function(wgt)
     -- global
     lvgl.rectangle({x=0, y=0, w=LCD_W, h=LCD_H, color=lcd.RGB(0x111111), filled=true})
     lvgl.label({text=string.format("%s-LVGL", wgt.options.guiStyle), x=LCD_W-30, y=0, font=FS.FONT_6, color=GREY})
-    local pMain = lvgl.box({x=0, y=0, name="panelMain", visible=function() return wgt.is_connected end})
+    local pMain = lvgl.box({x=0, y=0, name="panelMain"
+        -- , visible=function() return wgt.is_connected end
+    })
 
     -- pid profile (bank)
     pMain:build({{type="box", x=30, y=150,
@@ -480,14 +475,16 @@ build_ui_modern = function(wgt)
         function(wgt) return wgt.values.capaPercent end,
         function(wgt) return wgt.values.capaColor end
     )
-    bCapa:label({text=function() return string.format("%d%%", wgt.values.capaPercent) end, x=25, y=16, font=FS.FONT_16 ,color=WHITE})
+    bCapa:label({text=function() return wgt.values.capaPercent_txt end, x=25, y=16, font=FS.FONT_16 ,color=WHITE})
     -- bCapa:label({text=function() return string.format("%dmah", wgt.values.capaTotal) end, x=5, y=18, font=FS.FONT_8 ,color=WHITE})
 
 
 
     -- current
     local g_rad = 40
-    local g_thick = 11
+    local g_thick = 8--11
+    local gm_rad = g_rad-10
+    local gm_thick = 8
     local g_y = 55
     local g_angel_min = 140
     local g_angel_max = 400
@@ -499,38 +496,31 @@ build_ui_modern = function(wgt)
 
     local bCurr = pMain:box({x=210, y=g_y})
     bCurr:label({text="Current",  x=0, y=0, font=FS.FONT_6, color=GREY})
-    -- bCurr:label({text=function() return wgt.values.curr_str end, x=0, y=12, font=FS.FONT_16 ,color=function() return (wgt.values.curr < 100) and YELLOW or RED end },
     bCurr:label({x=30, y=40, text=function() return wgt.values.curr_str end, font=FS.FONT_812, color=WHITE})
     bCurr:label({x=35, y=70, text=function() return wgt.values.curr_max_str end, font=FS.FONT_6, color=lcd.RGB(0x787878)})
     bCurr:arc({x=50, y=50, radius=g_rad, thickness=g_thick, startAngle=g_angel_min, endAngle=g_angel_max, rounded=true, color=lcd.RGB(0x222222)})
-    -- bCurr:arc({radius=20, thickness=15, startAngle=0, endAngle=function() return wgt.values.curr * 360 / 100 end, color=WHITE})
-    bCurr:arc({x=50, y=50, radius=g_rad, thickness=g_thick, startAngle=g_angel_min, endAngle=function() return calEndAngle(wgt.values.curr_max_percent) end, color=lcd.RGB(0xFF623F), opacity=80})
-    bCurr:arc({x=50, y=50, radius=g_rad, thickness=g_thick, startAngle=g_angel_min, endAngle=function() return calEndAngle(wgt.values.curr_percent) end, color=lcd.RGB(0xFF623F)})
-
+    -- bCurr:arc({x=50, y=50, radius=g_rad, thickness=g_thick, startAngle=g_angel_min, endAngle=function() return calEndAngle(wgt.values.curr_max_percent) end, color=lcd.RGB(0xFF623F), opacity=180})
+    bCurr:arc({x=50, y=50, radius=gm_rad, thickness=gm_thick, startAngle=g_angel_min, endAngle=function() return calEndAngle(wgt.values.curr_max_percent) end, color=lcd.RGB(0xFF623F), opacity=180})
+    bCurr:arc({x=50, y=50, radius=g_rad , thickness=g_thick,  startAngle=g_angel_min, endAngle=function() return calEndAngle(wgt.values.curr_percent)     end, color=lcd.RGB(0xFF623F)})
 
     -- thr
     local bThr = pMain:box({x=210+2*g_rad+10, y=g_y })
     bThr:label({text="thr",  x=0, y=0, font=FS.FONT_6, color=GREY})
-    -- bThr:label({text=function() return wgt.values.curr_str end, x=0, y=12, font=FS.FONT_16 ,color=function() return (wgt.values.curr < 100) and YELLOW or RED end },
-    bThr:label({x=35, y=40, text=function() return string.format("%s%%", wgt.values.thr) end, font=FS.FONT_8, color=WHITE})
+    bThr:label({x=35, y=40, text=function() return string.format("%s%%", wgt.values.thr)      end, font=FS.FONT_8, color=WHITE})
     bThr:label({x=35, y=70, text=function() return string.format("+%s%%", wgt.values.thr_max) end, font=FS.FONT_6, color=GREY})
     bThr:arc({x=50, y=50, radius=g_rad, thickness=g_thick, startAngle=g_angel_min, endAngle=g_angel_max, color=lcd.RGB(0x222222)})
-    -- bThr:arc({radius=20, thickness=15, startAngle=0, endAngle=function() return wgt.values.curr * 360 / 100 end, color=WHITE})
-    -- bThr:arc({x=50, y=50, radius=g_rad, thickness=g_thick, startAngle=g_angel_min, endAngle=function() return calEndAngle(85+30) end, color=lcd.RGB(0x644A25)})
     bThr:arc({x=50, y=50, radius=g_rad, thickness=g_thick, startAngle=g_angel_min, endAngle=function() return calEndAngle(wgt.values.thr_max) end, color=lcd.RGB(0xFFA72C), opacity=80})
-    bThr:arc({x=50, y=50, radius=g_rad, thickness=g_thick, startAngle=g_angel_min, endAngle=function() return calEndAngle(wgt.values.thr) end, color=lcd.RGB(0xFFA72C)})
+    bThr:arc({x=50, y=50, radius=g_rad, thickness=g_thick, startAngle=g_angel_min, endAngle=function() return calEndAngle(wgt.values.thr)     end, color=lcd.RGB(0xFFA72C)})
 
     -- temp
     local bTemp = pMain:box({x=210+4*g_rad+20, y=g_y})
     bTemp:label({text="temp",  x=0, y=0, font=FS.FONT_6, color=GREY})
-    -- bTemp:label({text=function() return wgt.values.curr_str end, x=0, y=12, font=FS.FONT_16 ,color=function() return (wgt.values.curr < 100) and YELLOW or RED end },
     bTemp:label({x=35, y=40, text=function() return (wgt.values.EscT_str or "--°c") end, font=FS.FONT_8, color=WHITE})
     bTemp:label({x=35, y=70, text=function() return (wgt.values.EscT_max_str or "--°c") end, font=FS.FONT_6, color=GREY})
     bTemp:arc({x=50, y=50, radius=g_rad, thickness=g_thick, startAngle=g_angel_min, endAngle=g_angel_max, color=lcd.RGB(0x222222)})
-    -- bTemp:arc({radius=20, thickness=15, startAngle=0, endAngle=function() return wgt.values.curr * 360 / 100 end, color=WHITE})
-    -- bTemp:arc({x=50, y=50, radius=g_rad, thickness=g_thick, startAngle=g_angel_min, endAngle=function() return calEndAngle(48+30) end, color=lcd.RGB(0x1F96C2)})
-    bTemp:arc({x=50, y=50, radius=g_rad, thickness=g_thick, startAngle=g_angel_min, endAngle=function() return calEndAngle(wgt.values.EscT_percent) end, color=lcd.RGB(0x1F96C2)})
-    bTemp:arc({x=50, y=50, radius=g_rad, thickness=g_thick, startAngle=g_angel_min, endAngle=function() return calEndAngle(wgt.values.EscT_max_percent) end, color=lcd.RGB(0x1F96C2), opacity=80})
+    -- bTemp:arc({x=50, y=50, radius=g_rad, thickness=g_thick, startAngle=g_angel_min, endAngle=function() return calEndAngle(wgt.values.EscT_max_percent) end, color=lcd.RGB(0x1F96C2), opacity=180})
+    bTemp:arc({x=50, y=50, radius=gm_rad, thickness=gm_thick, startAngle=g_angel_min, endAngle=function() return calEndAngle(wgt.values.EscT_max_percent) end, color=lcd.RGB(0x1F96C2), opacity=180})
+    bTemp:arc({x=50, y=50, radius=g_rad,  thickness=g_thick,  startAngle=g_angel_min, endAngle=function() return calEndAngle(wgt.values.EscT_percent)     end, color=lcd.RGB(0x1F96C2)})
 
 
     -- status bar
@@ -558,6 +548,22 @@ build_ui_modern = function(wgt)
     local bCraftName = pMain:box({x=5, y=100})
     bCraftName:rectangle({x=10, y=17, w=isizew-20, h=25, filled=true, rounded=8, color=DARKGREY, opacity=200})
     bCraftName:label({text=function() return wgt.values.craft_name end,  x=15, y=15, font=FS.FONT_12 ,color=(wgt.options.guiStyle~=2 and WHITE or txtColor)})
+
+    -- failed to arm flags
+    local bNoConn = pMain:box({x=150, y=45, visible=function() return wgt.values.arm_fail end})
+    bNoConn:rectangle({x=0, y=0, w=280, h=150, color=RED, filled=true, rounded=8, opacity=245})
+    bNoConn:label({text=function() return wgt.values.arm_disable_flags_txt end, x=10, y=0, font=FS.FONT_8, color=WHITE})
+
+
+    -- no connection
+    local bNoConn = lvgl.box({x=0, y=0, visible=function() return wgt.is_connected==false end})
+    -- bNoConn:label({x=100,  y=5,   text="Rotorflight Dashboard", font=FS.FONT_12, color=WHITE})
+    local isizew=200
+    local isizeh=140
+    bNoConn:rectangle({x=5, y=5, w=isizew, h=isizeh, rounded=15, filled=true, color=BLACK, opacity=250})
+    bNoConn:label({x=30, y=10, text=function() return wgt.not_connected_error end , font=FS.FONT_8, color=WHITE})
+    bNoConn:image({x=50, y=30, w=110, h=110, file=baseDir.."widgets/img/no_connection_wr.png"})
+
 end
 
 
@@ -590,7 +596,7 @@ local function updateRpm(wgt)
     local Hspd = getValue("Hspd")
     if inSimu then Hspd = 1800 end
     wgt.values.rpm = Hspd
-    wgt.values.rpm_str = string.format("%d",Hspd)
+    wgt.values.rpm_str = string.format("%s",Hspd)
 end
 
 local function updateProfiles(wgt)
@@ -688,6 +694,8 @@ local function updateCapa(wgt)
     else
         wgt.values.capaColor = lcd.RGB(0x00963A) --GREEN
     end
+
+    wgt.values.capaPercent_txt = string.format("%d%%", wgt.values.capaPercent)
 end
 
 local function updateGovernor(wgt)
@@ -731,13 +739,14 @@ local  function updateArm(wgt)
     local flagList = wgt.mspTool.armingDisableFlagsList()
     wgt.values.arm_disable_flags_list = flagList
     wgt.values.arm_disable_flags_txt = ""
+    wgt.values.arm_fail = false
 
     if flagList ~= nil then
         -- log("disableFlags len: %s", #flagList)
         if (#flagList == 0) then
-            -- lcd.drawText(x, y,"ARM", FS.FONT_12 + RED)
+            wgt.values.arm_fail = false
         else
-            -- lcd.drawText(x, y,"Not Arm", FS.FONT_12 + RED)
+            wgt.values.arm_fail = true
             for i in pairs(flagList) do
                 -- log("disableFlags: %s", i)
                 -- log("disableFlags: %s", flagList[i])
@@ -745,8 +754,6 @@ local  function updateArm(wgt)
             end
 
         end
-    else
-        wgt.values.arm_disable_flags_txt = ""
     end
 
 end
@@ -877,4 +884,4 @@ local function refresh(wgt, event, touchState)
    dbgLayout()
 end
 
-return {name=app_name, create=create, update=update, background=background, refresh=refresh}
+return {create=create, update=update, background=background, refresh=refresh}
