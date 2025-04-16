@@ -40,7 +40,7 @@ local function getStatus(callback, callbackParam)
             10, 1,          -- cpuLoad (0x010A)
             0,              -- Extra flight mode flags count (compatibility)
             0,              -- Arming disable flags count
-            26, 0, 0, 0,    -- armingDisableFlags (0x001A0000)
+            0x00, 0, 0, 0,  -- armingDisableFlags (0x84 thr & no receiver)
             0,              -- reboot required  22
             6,              -- Configuration state
             1,              -- current PID profile index(bank) 24
