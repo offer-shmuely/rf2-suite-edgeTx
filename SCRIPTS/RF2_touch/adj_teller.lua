@@ -205,6 +205,7 @@ local function init()
 end
 
 local function run()
+    --rf2.log("adj_teller.lua run")
     if timeLastChange == -1 then init() end
 
     if timeExitTool then

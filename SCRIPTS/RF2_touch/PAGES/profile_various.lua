@@ -15,7 +15,7 @@ local profileSwitcher = assert(rf2.loadScript("PAGES/helpers/profileSwitcher.lua
 local pidProfile = rf2.useApi("mspPidProfile").getDefaults()
 collectgarbage()
 
-fields[#fields + 1] = { t = "Current PID profile",     x = x,          y = incY(lineSpacing), sp = x + sp * 1.17, data = { value = nil, min = 0, max = 5, table = { [0] = "1", "2", "3", "4", "5", "6" } }, preEdit = profileSwitcher.startPidEditing, postEdit = profileSwitcher.endPidEditing, visible=false }
+fields[#fields + 1] = { t = "Current PID profile",     x = x,          y = incY(lineSpacing), sp = x + sp * 1.17, data = { value = nil, min = 0, max = 5, table = { [0] = "1", "2", "3", "4", "5", "6" } }, preEdit = profileSwitcher.startPidEditing, postEdit = profileSwitcher.endPidEditing }
 
 incY(lineSpacing * 0.25)
 labels[#labels + 1] = { t = "Main Rotor",              x = x,            y = incY(lineSpacing) }

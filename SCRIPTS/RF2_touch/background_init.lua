@@ -137,7 +137,6 @@ local function initializeQueue()
 
                 rf2.useApi("mspTelemetryConfig").getTelemetryConfig(
                     function(_, config)
-                        rf2.log("config.crsf_telemetry_mode.value: %s", config.crsf_telemetry_mode.value)
                         crsfCustomTelemetryEnabled = config.crsf_telemetry_mode.value == 1
                         crsf_telemetry_sensors = config.crsf_telemetry_sensors
                     end)
@@ -159,6 +158,7 @@ local function initialize(modelIsConnected)
         return false
     end
 
+    --rf2.log("modelIsConnected: %s, queueInitialized: %s", modelIsConnected, queueInitialized)
     if not modelIsConnected then
         return false
     end

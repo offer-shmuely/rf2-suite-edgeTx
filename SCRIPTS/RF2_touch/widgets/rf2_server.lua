@@ -172,6 +172,16 @@ end
 local function state_WAIT_FOR_CONNECTION_INIT(wgt)
     log("STATE.WAIT_FOR_CONNECTION_INIT")
     rf2.apiVersion = nil
+
+    rf2.protocol = assert(rf2.loadScript("protocols.lua"))()
+    rf2.radio = assert(rf2.loadScript("radios.lua"))().msp
+    rf2.mspQueue = assert(rf2.loadScript("MSP/mspQueue.lua"))()
+    rf2.mspQueue.maxRetries = rf2.protocol.maxRetries
+    rf2.mspHelper = assert(rf2.loadScript("MSP/mspHelper.lua"))()
+    assert(rf2.loadScript(rf2.protocol.mspTransport))()
+    assert(rf2.loadScript("MSP/common.lua"))()
+    backgroundTask = rf2.loadScript("background.lua")()
+
     state = STATE.WAIT_FOR_CONNECTION
 end
 
@@ -181,15 +191,7 @@ local function state_WAIT_FOR_CONNECTION(wgt)
         return
     end
 
-    log("STATE.state_WAIT_FOR_CONNECTION")
-    rf2.protocol = assert(rf2.loadScript("protocols.lua"))()
-    rf2.radio = assert(rf2.loadScript("radios.lua"))().msp
-    rf2.mspQueue = assert(rf2.loadScript("MSP/mspQueue.lua"))()
-    rf2.mspQueue.maxRetries = rf2.protocol.maxRetries
-    rf2.mspHelper = assert(rf2.loadScript("MSP/mspHelper.lua"))()
-    assert(rf2.loadScript(rf2.protocol.mspTransport))()
-    assert(rf2.loadScript("MSP/common.lua"))()
-    backgroundTask = rf2.loadScript("background.lua")()
+    log("STATE.state_WAIT_FOR_CONNECTION (is_telem on)")
 
     backgroundTask()
 

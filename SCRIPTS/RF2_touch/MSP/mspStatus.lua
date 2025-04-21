@@ -29,7 +29,6 @@ local function getStatus(callback, callbackParam)
             --rf2.print("Profile: "..tostring(status.profile+1))
             --rf2.print("rateProfile: "..tostring(status.rateProfile+1))
             callback(callbackParam, status)
-
         end,
         simulatorResponse = {
             240, 1, 124, 0, -- Header

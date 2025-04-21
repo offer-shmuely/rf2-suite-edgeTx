@@ -24,7 +24,7 @@ y = tableStartY
 labels = {}
 fields = {}
 
-fields[#fields + 1] = { t = "Current rate profile", x = x, y = incY(lineSpacing), sp = x + sp * 1.17, data = { value = nil, min = 0, max = 5, table = { [0] = "1", "2", "3", "4", "5", "6" } }, preEdit = rateSwitcher.startPidEditing, postEdit = rateSwitcher.endPidEditing, visible=false}
+fields[#fields + 1] = { t = "Current rate profile", x = x, y = incY(lineSpacing), sp = x + sp * 1.17, data = { value = nil, min = 0, max = 5, table = { [0] = "1", "2", "3", "4", "5", "6" } }, preEdit = rateSwitcher.startPidEditing, postEdit = rateSwitcher.endPidEditing }
 incY(lineSpacing * 0.5)
 
 local responseTime = "Response time"

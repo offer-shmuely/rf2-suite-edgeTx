@@ -32,8 +32,8 @@ local endRateEditing = function(field, page)
     mspSetProfile.setRateProfile(field.data.value)
 end
 
-fields[#fields + 1] = { t = "Current PID profile",   x = x,              y = incY(lineSpacing), sp = x + sp * 1.17, data = { value = nil, min = 0, max = 5, table = { [0] = "1", "2", "3", "4", "5", "6" } }, preEdit = startEditing, postEdit = endPidEditing, visible=false }
-fields[#fields + 1] = { t = "Current rate profile",  x = x,              y = incY(lineSpacing), sp = x + sp * 1.17, data = { value = nil, min = 0, max = 5, table = { [0] = "1", "2", "3", "4", "5", "6" } }, preEdit = startEditing, postEdit = endRateEditing, visible=false }
+fields[#fields + 1] = { t = "Current PID profile",   x = x,              y = incY(lineSpacing), sp = x + sp * 1.17, data = { value = nil, min = 0, max = 5, table = { [0] = "1", "2", "3", "4", "5", "6" } }, preEdit = startEditing, postEdit = endPidEditing }
+fields[#fields + 1] = { t = "Current rate profile",  x = x,              y = incY(lineSpacing), sp = x + sp * 1.17, data = { value = nil, min = 0, max = 5, table = { [0] = "1", "2", "3", "4", "5", "6" } }, preEdit = startEditing, postEdit = endRateEditing }
 
 incY(lineSpacing * 0.25)
 labels[#labels + 1] = { t = "Arming Disabled Flags", x = x,              y = incY(lineSpacing) }
@@ -116,7 +116,6 @@ return {
     end,
 
     onProcessedMspStatus = function(self, status)
-        -- rf2.log("onProcessedMspStatus")
         fcStatus = status
         labels[2].t = armingDisableFlagsToString(fcStatus.armingDisableFlags)
         if not editing then

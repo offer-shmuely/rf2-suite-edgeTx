@@ -16,7 +16,6 @@ function MspQueueController:isProcessed()
     return not self.currentMessage and #self.messageQueue == 0
 end
 
---[[
 function joinTableItems(table, delimiter)
     if table == nil or #table == 0 then return "" end
     delimiter = delimiter or ""
@@ -26,7 +25,6 @@ function joinTableItems(table, delimiter)
     end
     return result
 end
---]]
 
 local function popFirstElement(tbl)
     if tbl == nil or #tbl == 0 then return nil end
@@ -77,9 +75,9 @@ function MspQueueController:processQueue()
         mspProcessTxQ()
         cmd, buf, err = mspPollReply()
     else
-        --rf2.print("Sending  cmd "..self.currentMessage.command..": {" .. joinTableItems(self.currentMessage.payload, ", ") .. "}")
+        --rf2.log("Sending  cmd: %s, : %s}", self.currentMessage.command, joinTableItems(self.currentMessage.payload, ", "))
         if not self.currentMessage.simulatorResponse then
-            --rf2.print("No simulator response for command: %s", self.currentMessage.command)
+            --rf2.log("No simulator response for command: %s", self.currentMessage.command)
             self.currentMessage = nil
             return
         end

@@ -13,7 +13,7 @@ local fields = {}
 local profileSwitcher = assert(rf2.loadScript("PAGES/helpers/profileSwitcher.lua"))()
 local rescueProfile = rf2.useApi("mspRescueProfile").getDefaults()
 
- fields[#fields + 1] = { t = "Current PID profile",     x = x,          y = incY(lineSpacing), sp = x + sp * 1.17, data = { value = nil, min = 0, max = 5, table = { [0] = "1", "2", "3", "4", "5", "6" } }, preEdit = profileSwitcher.startPidEditing, postEdit = profileSwitcher.endPidEditing, visible=false }
+fields[#fields + 1] = { t = "Current PID profile", x = x,          y = incY(lineSpacing), sp = x + sp * 1.17, data = { value = nil, min = 0, max = 5, table = { [0] = "1", "2", "3", "4", "5", "6" } }, preEdit = profileSwitcher.startPidEditing, postEdit = profileSwitcher.endPidEditing }
 
 incY(lineSpacing * 0.25)
 --fields[#fields + 1] = { t = "Enable rescue",     x = x,          y = incY(lineSpacing), sp = x + sp, min = 0, max = 2,     vals = { 1 }, table = { [0] = "Off", "On", "Alt hold" } }

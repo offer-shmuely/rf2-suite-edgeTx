@@ -29,12 +29,12 @@ local function run()
         initTask = initTask or assert(rf2.loadScript("background_init.lua"))()
         local initTaskResult = initTask.run(modelIsConnected)
         if not initTaskResult.isInitialized then
-            rf2.print("Not initialized yet")
+            --rf2.print("Not initialized yet")
             return 0
         end
         rf2.log("bg initTaskResult.crsfCustomTelemetryEnabled: %s", initTaskResult.crsfCustomTelemetryEnabled)
         if initTaskResult.crsfCustomTelemetryEnabled then
-            customTelemetryTask = assert(rf2.loadScript("rf2tlm.lua"))(initTaskResult.crsf_telemetry_sensors)
+            customTelemetryTask = customTelemetryTask or assert(rf2.loadScript("rf2tlm.lua"))(initTaskResult.crsf_telemetry_sensors)
         end
         adjTellerTask = assert(rf2.loadScript("adj_teller.lua"))()
         initTask = nil
@@ -47,8 +47,10 @@ local function run()
         return 0
     end
 
+    --rf2.log("adjTellerTask: %s", tostring(adjTellerTask))
     if adjTellerTask and adjTellerTask.run() == 2  then
         -- no adjustment sensors found
+        rf2.log("adjTellerTask: no adjustment sensors found ---------------------------------")
         adjTellerTask = nil
         collectgarbage()
     end

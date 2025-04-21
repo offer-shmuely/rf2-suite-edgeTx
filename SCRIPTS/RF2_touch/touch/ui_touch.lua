@@ -467,6 +467,9 @@ local function buildFieldsPage()
         local txt2 = string.format("%s \n%s%s", txt, f.data.value, units)
         local isVisible = f.visible == nil or f.visible==true
 
+        if f.t == "Current PID profile" then  isVisible = false end
+        if f.t == "Current rate profile" then  isVisible = false end
+
         if isVisible == false then
             -- do nothing
         elseif fieldIsButton(f) then
