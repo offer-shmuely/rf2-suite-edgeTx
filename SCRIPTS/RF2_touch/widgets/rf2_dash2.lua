@@ -672,7 +672,8 @@ local function build_ui_appmode(wgt)
                     end,
                     font=BOLD
                 },
-                { type="button", text="read all pids", x=340, y=0, press=readPids},
+                { type="button", text="read all pids", x=200, y=0, press=readPids},
+                { type="toggle", title="short/long", x=400, y=0, get=function() return wgt.show_3_or_6 or 0 end, set=function(val) wgt.show_3_or_6=val end },
             }
         }
     })
@@ -685,8 +686,8 @@ local function build_ui_appmode(wgt)
     local pTitles = {"P", "I", "D", "F"}
     local axisTitles = {"roll", "pitch", "yaw"}
     for i=1, 6 do
-        bPidList:label({x=80+(i-1)*60, y=0, text="bank " .. i})
-        bPidList:vline({x=80-10 +(i-1)*60, y=5, h=360, w=1, color=lineColor})--, rounded=true})
+        bPidList:label({x=80+(i-1)*60, y=0, text="bank " .. i, visible=function() return i<=3 or wgt.show_3_or_6==1 end})
+        bPidList:vline({x=80-10 +(i-1)*60, y=5, h=360, w=1, color=lineColor, visible=function() return i<=3 or wgt.show_3_or_6==1 end})--, rounded=true})
     end
 
     for axis=1,3 do
@@ -697,9 +698,10 @@ local function build_ui_appmode(wgt)
         for p=1,4 do
             local h1 = h2 +(p-1)*20 +30
             bPidList:label({x=45, y=h1, text=pTitles[p]})
+            local max_col = (wgt.show_3_or_6==1) and 6 or 3
             for i=1, 6 do
                 -- bPidList:rectangle({x=70+(i-1)*60, y=h1, w=60, h=25, color=RED, filled=false})
-                bPidList:label({x=70+(i-1)*60, y=h1, w=60, text=function() return getPidValues(i, axis, p) end, font=function() return (i==wgt.values.profile_id) and BOLD or 0 end, align=CENTER})
+                bPidList:label({x=70+(i-1)*60, y=h1, w=60, text=function() return getPidValues(i, axis, p) end, font=function() return (i==wgt.values.profile_id) and BOLD or 0 end, align=CENTER, visible=function() return i<=3 or wgt.show_3_or_6==1 end})
             end
         end
     end
