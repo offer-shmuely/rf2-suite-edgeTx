@@ -128,6 +128,17 @@ end
 
 rf2.reloadPage = invalidatePages
 
+rf2.storeCurrentField = function()
+    rf2.currentField = currentField
+end
+
+rf2.setCurrentField = function()
+    if rf2.currentField then
+        currentField = rf2.currentField
+        rf2.currentField = nil
+    end
+end
+
 local function rebootFc()
     --rf2.print("Attempting to reboot the FC...")
     pageState = pageStatus.rebooting
@@ -464,7 +475,6 @@ local function buildFieldsPage()
         end
         -- end label merging ----------------------------
 
-        local txt2 = string.format("%s \n%s%s", txt, f.data.value, units)
         local isVisible = f.visible == nil or f.visible==true
 
         if f.t == "Current PID profile" then  isVisible = false end
@@ -559,6 +569,7 @@ local function buildFieldsPage()
 
         end
 
+        local txt2 = string.format("%s \n%s%s", txt, f.data and f.data.value, units)
         log("buildFieldsPage: i=%s, col=%s, y=%s, text: %s", i, col, y, txt2)
     end
 

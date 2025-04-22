@@ -339,9 +339,9 @@ local function handleCrsfTelem()
         return 0
     end
 
-    -- wait 2 sec for all CRSF sensors to arrive
+    -- wait 4 sec for all CRSF sensors to arrive
     local dt = rf2.clock() - crsfSensorsStartArriveTime
-    if (dt < 2) then
+    if (dt < 4) then
         rf2.log("waiting for all CRSF sensors to arrive (%dsec)", dt)
         return 0
     end
@@ -365,6 +365,10 @@ local function handleCrsfTelem()
         end
     end
 
+    if (dt < 8) then
+        rf2.log("waiting for all FC sensors to arrive (%dsec)", dt)
+        return 0
+    end
     -- rf2.log('bg rf2ltm defining  *Cnt & *Skp')
     setTelemetryValue(0xEE01, 0, 0, telemetryFrameCount, UNIT_RAW, 0, "*Cnt")
     setTelemetryValue(0xEE02, 0, 0, telemetryFrameSkip, UNIT_RAW, 0, "*Skp")

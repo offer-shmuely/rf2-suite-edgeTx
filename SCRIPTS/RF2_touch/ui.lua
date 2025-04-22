@@ -32,6 +32,7 @@ local PageFiles, Page, init, popupMenu
 local scrollSpeedTS = 0
 local displayMessage
 local waitMessage
+local pageChanged = false
 
 local backgroundFill = TEXT_BGCOLOR or ERASE
 local foregroundColor = LINE_COLOR or SOLID
@@ -182,6 +183,7 @@ end
 local function incPage(inc)
     currentPage = incMax(currentPage, inc, #PageFiles)
     currentField = 1
+    pageChanged = true
     invalidatePages()
 end
 
@@ -477,6 +479,11 @@ local function run_ui(event)
             Page.timer(Page)
         end
         if not Page then
+            if pageChanged then
+                -- Only clear queue when the current page has changed, and not when saving a page.
+                pageChanged = false
+                rf2.mspQueue:clear()
+            end
             collectgarbage()
             --rf2.showMemoryUsage("before loading page")
             Page = assert(rf2.loadScript("PAGES/"..PageFiles[currentPage].script))()

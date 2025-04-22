@@ -13,47 +13,8 @@ local err_img = bitmap.open(baseDir.."widgets/img/no_connection_wr.png")
 local fan = 3
 local fanT1 = 0
 
---------------------------------------------------------------
-local function log(fmt, ...)
-    print(string.format("[%s] "..fmt, app_name, ...))
-    return
-end
---------------------------------------------------------------
-
--- better font size names
-local FS={FONT_38=XXLSIZE,FONT_16=DBLSIZE,FONT_12=MIDSIZE,FONT_8=0,FONT_6=SMLSIZE}
-
-
-local function tableToString(tbl)
-    if (tbl == nil) then return "---" end
-    local result = {}
-    for key, value in pairs(tbl) do
-        table.insert(result, string.format("%s: %s", tostring(key), tostring(value)))
-    end
-    return table.concat(result, ", ")
-end
-
-local function isFileExist(file_name)
-    rf2.log("is_file_exist()")
-    local hFile = io.open(file_name, "r")
-    if hFile == nil then
-        rf2.log("file not exist - %s", file_name)
-        return false
-    end
-    io.close(hFile)
-    rf2.log("file exist - %s", file_name)
-    return true
-end
-
------------------------------------------------------------------------------------------------------------------
-
-local function update(wgt, options)
-    log("update")
-    if (wgt == nil) then return end
-    wgt.options = options
-    wgt.not_connected_error = "Not connected"
-
-    wgt.values = {
+local wgt = {
+    values = {
         craft_name = "-------",
         timer_str = "--:--",
         rpm = -1,
@@ -98,25 +59,127 @@ local function update(wgt, options)
         img_replacment_area2 = nil,
 
         thr_max = -1,
+    },
+
+    msp = {
+        cache = {
+            mspPidTuningAll = {
+                {
+                    roll =  { p = -1, i = -1, d = -1, f = -1},
+                    pitch = { p = -1, i = -1, d = -1, f = -1},
+                    yaw =   { p = -1, i = -1, d = -1 ,f = -1},
+                },
+                {
+                    roll =  { p = -1, i = -1, d = -1, f = -1},
+                    pitch = { p = -1, i = -1, d = -1, f = -1},
+                    yaw =   { p = -1, i = -1, d = -1 ,f = -1},
+                },
+                {
+                    roll =  { p = -1, i = -1, d = -1, f = -1},
+                    pitch = { p = -1, i = -1, d = -1, f = -1},
+                    yaw =   { p = -1, i = -1, d = -1 ,f = -1},
+                },
+                {
+                    roll =  { p = -1, i = -1, d = -1, f = -1},
+                    pitch = { p = -1, i = -1, d = -1, f = -1},
+                    yaw =   { p = -1, i = -1, d = -1 ,f = -1},
+                },
+                {
+                    roll =  { p = -1, i = -1, d = -1, f = -1},
+                    pitch = { p = -1, i = -1, d = -1, f = -1},
+                    yaw =   { p = -1, i = -1, d = -1 ,f = -1},
+                },
+                {
+                    roll =  { p = -1, i = -1, d = -1, f = -1},
+                    pitch = { p = -1, i = -1, d = -1, f = -1},
+                    yaw =   { p = -1, i = -1, d = -1 ,f = -1},
+                },
+            }
+        }
     }
+}
 
-    log("wgt.options.guiStyle==%s", wgt.options.guiStyle)
 
-    if wgt.options.guiStyle==3 then
-        build_ui_modern(wgt)
-    else
-        build_ui(wgt)
+--------------------------------------------------------------
+local function log(fmt, ...)
+    print(string.format("[%s] "..fmt, app_name, ...))
+    return
+end
+--------------------------------------------------------------
+
+-- better font size names
+local FS={FONT_38=XXLSIZE,FONT_16=DBLSIZE,FONT_12=MIDSIZE,FONT_8=0,FONT_6=SMLSIZE}
+
+
+local function tableToString(tbl)
+    if (tbl == nil) then return "---" end
+    local result = {}
+    for key, value in pairs(tbl) do
+        table.insert(result, string.format("%s: %s", tostring(key), tostring(value)))
     end
-    return wgt
+    return table.concat(result, ", ")
 end
 
-local function create(zone, options)
-    local wgt = {
-        zone = zone,
-        options = options,
-    }
-    return update(wgt, options)
+local function isFileExist(file_name)
+    rf2.log("is_file_exist()")
+    local hFile = io.open(file_name, "r")
+    if hFile == nil then
+        rf2.log("file not exist - %s", file_name)
+        return false
+    end
+    io.close(hFile)
+    rf2.log("file exist - %s", file_name)
+    return true
 end
+
+-----------------------------------------------------------------------------------------------------------------
+
+local function getPidValues(bank, axis, pidType)
+    local axisMap = { "roll", "pitch", "yaw" }
+    local axisName = axisMap[axis]
+
+    local pidTypeMap = { "p", "i", "d", "f" }
+    local pidKey = pidTypeMap[pidType]
+    -- log("getPidValues: bank: %d, axis: %s, pidType: %s", bank, axisName, pidKey)
+    local value = wgt.msp.cache.mspPidTuningAll[bank][axisName][pidKey]
+    return value or "N/A"
+    -- return string.format("%d-%d-%d", bank, axis, pidType)
+end
+
+local function onReceivedPidTuning(bank, data)
+    -- log("onReceivedPidTuning: wgt: %s", wgt)
+    -- log("onReceivedPidTuning: wgt: %s, data: %s, roll_p: %s", wgt, data, data.roll_p.value)
+    wgt.msp.cache.mspPidTuningAll[bank] = {
+        roll =  { p = data.roll_p.value , i = data.roll_i.value , d = data.roll_d.value , f = data.roll_f.value},
+        pitch = { p = data.pitch_p.value, i = data.pitch_i.value, d = data.pitch_d.value, f = data.pitch_f.value},
+        yaw =   { p = data.yaw_p.value  , i = data.yaw_i.value  , d = data.yaw_d.value  , f = data.yaw_f.value},
+    }
+end
+
+local function readPids()
+    log("readPids: wgt: %s", wgt)
+
+    rf2.useApi("mspSetProfile").setPidProfile(1-1, function() return end, nil)
+    rf2.useApi("mspPidTuning").read(onReceivedPidTuning, 1)
+
+    rf2.useApi("mspSetProfile").setPidProfile(2-1, function() return end, nil)
+    rf2.useApi("mspPidTuning").read(onReceivedPidTuning, 2)
+
+    rf2.useApi("mspSetProfile").setPidProfile(3-1, function() return end, nil)
+    rf2.useApi("mspPidTuning").read(onReceivedPidTuning, 3)
+
+    rf2.useApi("mspSetProfile").setPidProfile(4-1, function() return end, nil)
+    rf2.useApi("mspPidTuning").read(onReceivedPidTuning, 4)
+
+    rf2.useApi("mspSetProfile").setPidProfile(5-1, function() return end, nil)
+    rf2.useApi("mspPidTuning").read(onReceivedPidTuning, 5)
+
+    rf2.useApi("mspSetProfile").setPidProfile(6-1, function() return end, nil)
+    rf2.useApi("mspPidTuning").read(onReceivedPidTuning, 6)
+
+    rf2.useApi("mspSetProfile").setPidProfile(wgt.values.profile_id-1, function() return end, nil)
+end
+
 -----------------------------------------------------------------------------------------------------------------
 
 local function buildBlackboxHorz(parentBox, wgt, myBatt, fPercent, getPercentColor)
@@ -391,7 +454,8 @@ build_ui = function(wgt)
     bStatusBar:label({x=140, y=2, text=function() return string.format("TPWR+: %smw", getValue("TPWR+")) end, font=FS.FONT_6, color=WHITE})
     -- bStatusBar:label({x=210, y=2, text=function() return string.format("Gov: %s", wgt.values.governor_str) end, font=FS.FONT_6, color=WHITE})
     bStatusBar:label({x=300, y=2, text=function() return string.format("Thr+: %s%%", wgt.values.thr_max) end, font=FS.FONT_6, color=WHITE})
-    bStatusBar:label({x=430, y=2, text="Shmuely", font=FS.FONT_6, color=YELLOW})
+    bStatusBar:label({x=425, y=2, text="Shmuely", font=FS.FONT_6, color=YELLOW})
+    -- bStatusBar:label({x=390, y=2, text=rf2.LUA_VERSION, font=FS.FONT_6, color=WHITE})
 
     -- image
     local isizew=160
@@ -401,7 +465,6 @@ build_ui = function(wgt)
     local bImg = bImageArea:box({})
     wgt.values.img_box_1 = bImg
     wgt.values.img_replacment_area1 = bImageArea
-
 
     -- no connection
     local bNoConn = lvgl.box({x=0, y=0, visible=function() return wgt.is_connected==false end})
@@ -566,7 +629,86 @@ build_ui_modern = function(wgt)
 
 end
 
+-------------------------------------------------------------------
+local function close()
+    lvgl.confirm({title="Exit", message="exit config?",
+        confirm=(function() lvgl.exitFullScreen() end)
+    })
+end
 
+local function build_ui_appmode(wgt)
+    lvgl.clear()
+    local bMain = lvgl.box({x=0, y=0})
+    bMain:label({text = app_name, x=140,y=10, color=WHITE, font=FS.FONT_12})
+
+    local pg = lvgl.page({title="Rotorflight Dashboard", subtitle="Config",
+        back=close,
+        icon="/SCRIPTS/RF2_touch/widgets/img/rf2_logo.png",
+        -- flexFlow=lvgl.FLOW_COLUMN,
+        -- flexFlow=lvgl.FLOW_ROW,
+        -- flexPad=30,
+    })
+    -- pg:rectangle({x=0, y=0, w=LCD_W, h=LCD_H, color=RED, filled=true, hide=false})
+
+    -- pg:build({
+    --     { type="setting", x=0, y=10, title="Craft Name (on FC)",
+    --         children={
+    --             { type="textEdit", x=150, y=0, w=180, maxLen=20,
+    --                 value="sab goblin sport",
+    --                 set=(function(val) txt=val end)
+    --             },
+    --             { type="button", text="reload", x=340, y=0, press=readCurrentBank},
+    --             { type="button", text="Save", x=410, y=0, press=(function(wgt) readPids(wgt) end)},
+    --         }
+    --     }
+    -- })
+
+    pg:build({
+        { type="setting", x=0, y=0, -- title="Craft Name (on FC)",
+            children={
+                { type="label", x=5, y=0,
+                    text=function()
+                        return string.format("Bank: %s", wgt.values.profile_id_str)
+                    end,
+                    font=BOLD
+                },
+                { type="button", text="read all pids", x=340, y=0, press=readPids},
+            }
+        }
+    })
+
+
+    -- pg:label({x=5, y=0, text=function() return string.format("PID list: %s", wgt.values.profile_id) end, font=BOLD})
+
+    local bPidList = pg:box({x=0, y=50})
+    local lineColor = lcd.RGB(0xCCCCCC)
+    local pTitles = {"P", "I", "D", "F"}
+    local axisTitles = {"roll", "pitch", "yaw"}
+    for i=1, 6 do
+        bPidList:label({x=80+(i-1)*60, y=0, text="bank " .. i})
+        bPidList:vline({x=80-10 +(i-1)*60, y=5, h=360, w=1, color=lineColor})--, rounded=true})
+    end
+
+    for axis=1,3 do
+        local h2 = (axis-1)*120+20
+        -- bPidList:hline({x=50, y=h2+5, w=400, h=25, color=lineColor, rounded=true})
+        bPidList:rectangle({x=40, y=h2, w=420, h=25, color=lineColor, filled=true, rounded=9})
+        bPidList:label({x=200, y=h2, text=axisTitles[axis], font=BOLD})
+        for p=1,4 do
+            local h1 = h2 +(p-1)*20 +30
+            bPidList:label({x=45, y=h1, text=pTitles[p]})
+            for i=1, 6 do
+                -- bPidList:rectangle({x=70+(i-1)*60, y=h1, w=60, h=25, color=RED, filled=false})
+                bPidList:label({x=70+(i-1)*60, y=h1, w=60, text=function() return getPidValues(i, axis, p) end, font=function() return (i==wgt.values.profile_id) and BOLD or 0 end, align=CENTER})
+            end
+        end
+    end
+    -- bPidList:hline({x=50, y=25, w=400, h=1, color=lineColor})--, rounded=true})
+    -- bPidList:vline({x=50-10 +(7-1)*70, y=5, h=110, w=1, color=lineColor})--, rounded=true})
+
+end
+
+-------------------------------------------------------------------
 
 local replImg = 0
 local imgTp = 0
@@ -838,6 +980,36 @@ local function updateImage(wgt)
 
 end
 
+---------------------------------------------------------------------------------------
+
+local function update(wgt, options)
+    log("update")
+    if (wgt == nil) then return end
+    wgt.options = options
+    wgt.not_connected_error = "Not connected"
+
+    log("wgt.options.guiStyle==%s", wgt.options.guiStyle)
+
+    log("isFullscreen: %s", lvgl.isFullScreen())
+    log("isAppMode: %s", lvgl.isAppMode())
+
+    if lvgl.isFullScreen() then
+        log("update: in app mode")
+        build_ui_appmode(wgt)
+    elseif wgt.options.guiStyle==3 then
+        build_ui_modern(wgt)
+    else
+        build_ui(wgt)
+    end
+    return wgt
+end
+
+local function create(zone, options)
+    wgt.zone = zone
+    wgt.options = options
+    return update(wgt, options)
+end
+
 local function background(wgt)
 end
 
@@ -857,7 +1029,6 @@ local function refresh(wgt, event, touchState)
         end
     end
     wgt.mspTool = rf2fc.mspCacheTools
-
 
     updateCraftName(wgt)
     updateTimeCount(wgt)
@@ -879,7 +1050,6 @@ local function refresh(wgt, event, touchState)
         if fan > 10 then fan = 1 end
         fanT1 = rf2.clock()
     end
-
 
    dbgLayout()
 end

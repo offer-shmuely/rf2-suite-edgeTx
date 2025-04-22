@@ -112,9 +112,19 @@ local function waitForClassicCrsfSensorsDiscovery()
     return 0
 end
 
+local function setModelName(name)
+    local newName =  ">" .. ((name and #name > 0) and name or "Rotorflight")
+    local info = model.getInfo()
+    if info.name == newName then
+        return
+    end
+    info.name = newName
+    model.setInfo(info)
+end
+
 local queueInitialized = false
 local function initializeQueue()
-    rf2.log("Initializing MSP queue")
+    --rf2.log("Initializing MSP queue")
 
     rf2.mspQueue.maxRetries = -1       -- retry indefinitely
 
@@ -126,9 +136,7 @@ local function initializeQueue()
             if autoSetName then
                 rf2.useApi("mspName").getModelName(
                     function(_, name)
-                        local info = model.getInfo()
-                        info.name = name
-                        model.setInfo(info)
+                        setModelName(name)
                     end)
             end
 
@@ -145,7 +153,7 @@ local function initializeQueue()
             rf2.useApi("mspSetRtc").setRtc(
                 function()
                     playTone(1600, 300, 0, PLAY_BACKGROUND)
-                    rf2.print("RTC set")
+                    --rf2.print("RTC set")
                     rf2.mspQueue.maxRetries = rf2.protocol.maxRetries
                     initializationDone = true
                 end)
@@ -160,6 +168,10 @@ local function initialize(modelIsConnected)
 
     --rf2.log("modelIsConnected: %s, queueInitialized: %s", modelIsConnected, queueInitialized)
     if not modelIsConnected then
+        if autoSetName then
+            setModelName(nil)
+        end
+
         return false
     end
 
