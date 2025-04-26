@@ -470,8 +470,8 @@ build_ui = function(wgt)
     local bNoConn = lvgl.box({x=0, y=0, visible=function() return wgt.is_connected==false end})
     bNoConn:label({x=100,  y=5,   text="Rotorflight Dashboard", font=FS.FONT_12, color=WHITE})
     bNoConn:label({x=140, y=170, text=function() return wgt.not_connected_error end , font=FS.FONT_8, color=WHITE})
-    bNoConn:image({x=150, y=40, w=128, h=128, file=baseDir.."widgets/img/no_connection_wr.png"})
-
+    bNoConn:image({x=176, y=40, w=128, h=128, file=baseDir.."widgets/img/no_connection_wr.png"})
+    -- lvgl.line({color=WHITE, thickness=3, pts={{480/2,5}, {480/2,200}} })
 end
 
 build_ui_modern = function(wgt)
