@@ -175,7 +175,6 @@ local function formatTime(wgt, t1)
       isNegative = true
       dd_raw = math.abs(dd_raw)
     end
-    -- log("dd_raw: " .. dd_raw)
 
     local dd = math.floor(dd_raw / 86400)
     dd_raw = dd_raw - dd * 86400

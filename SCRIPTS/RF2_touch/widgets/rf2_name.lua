@@ -39,7 +39,7 @@ local function refresh(wgt)
     end
 
     if is_avail == false then
-        lcd.drawText(10 ,0, err, FS.FONT_8 + RED)
+        lcd.drawText(10 ,0, err, FS.FONT_8 + LIGHTGREY)
         -- lcd.drawText(10 ,0, "---------", FS.FONT_8 + RED)
         return
     end
