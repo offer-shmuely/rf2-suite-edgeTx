@@ -403,7 +403,7 @@ end
 local function background(wgt)
     rf2fc.msp.ctl.lastServerTime = rf2.clock()
 
-    if (rf2.clock() - rf2fc.msp.ctl.lastUpdateTime) > 10 then
+    if (rf2.clock() - rf2fc.msp.ctl.lastUpdateTime) > 10 or getValue("RQly") <= 0 then
         rf2fc.msp.ctl.connected = false
     end
 
