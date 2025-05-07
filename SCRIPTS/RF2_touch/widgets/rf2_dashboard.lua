@@ -1,4 +1,4 @@
-local app_name = "rf2_dash2"
+local app_name = "rf2_dashboard"
 
 local baseDir = "/SCRIPTS/RF2_touch/"
 local inSimu = string.sub(select(2,getVersion()), -4) == "simu"
@@ -321,27 +321,24 @@ build_ui_fancy = function(wgt)
     local txtColor = wgt.options.textColor
     local titleGreyColor = LIGHTGREY
 
-    -- local ts_w, ts_h = lcd.sizeText(num_flights, font_size)
-    local dx = 20 --(zone_w - ts_w) / 2
+    local dx = 20
 
     lvgl.clear()
 
     -- global
     lvgl.rectangle({x=0, y=0, w=LCD_W, h=LCD_H, color=lcd.RGB(0x111111), filled=true})
-    lvgl.label({text=string.format("%s-LVGL", wgt.options.guiStyle), x=LCD_W-30, y=0, font=FS.FONT_6, color=GREY})
-    local pMain = lvgl.box({x=0, y=0, name="panelMain"})--, visible=function() return wgt.is_connected end})
+    local pMain = lvgl.box({x=0, y=0})
 
-    -- craft name
-    local pCraftName = pMain:box({x=160, y=160})
-    pCraftName:label({text="Heli Name",  x=0, y=0, font=FS.FONT_6, color=titleGreyColor})
-    pCraftName:label({text=function() return wgt.values.craft_name end,  x=0, y=15, font=FS.FONT_12 ,color=txtColor})
-
+    -- -- craft name
+    -- local pCraftName = pMain:box({x=160, y=160})
+    -- pCraftName:label({text="Heli Name",  x=0, y=0, font=FS.FONT_6, color=titleGreyColor})
+    -- pCraftName:label({text=function() return wgt.values.craft_name end,  x=0, y=15, font=FS.FONT_12 ,color=txtColor})
 
     -- pid profile (bank)
     pMain:build({{type="box", x=0, y=0,
         children={
             -- {type="rectangle", x=0, y=0, w=40, h=50, color=YELLOW},
-            {type="label", text="Bank", x=0, y=0, font=FS.FONT_6, color=titleGreyColor},
+            {type="label", text="Profile", x=0, y=0, font=FS.FONT_6, color=titleGreyColor},
             {type="label", text=function() return wgt.values.profile_id_str end , x=6, y=10, font=FS.FONT_16 ,color=txtColor},
         }
     }})
@@ -389,10 +386,10 @@ build_ui_fancy = function(wgt)
     )
 
     -- capacity
-    local bCapa = pMain:box({type="box", x=5, y=120})
+    local bCapa = pMain:box({type="box", x=5, y=145})
     bCapa:label({text=function() return string.format("Capacity (Total: %s)", wgt.values.capaTotal) end,  x=0, y=0, font=FS.FONT_6, color=titleGreyColor})
     buildBlackboxHorz(bCapa, wgt,
-        {x=0, y=17,w=140,h=35,segments_w=20, color=WHITE, bg_color=GREY, cath_w=10, cath_h=30, segments_h=20, cath=false},
+        {x=0, y=17,w=250,h=40,segments_w=20, color=WHITE, bg_color=GREY, cath_w=10, cath_h=30, segments_h=20, cath=false},
         function(wgt) return wgt.values.capaPercent end,
         function(wgt) return wgt.values.capaColor end
     )
@@ -425,22 +422,6 @@ build_ui_fancy = function(wgt)
 
     -- arm
     local bArm = pMain:box({x=140, y=5})
-    -- local dx = 1
-    -- for i = 6, 1, -1 do
-    --     bArm:rectangle({
-    --         x = 10 - (i * dx),
-    --         y = 10 - (i * dx),
-    --         w = 140 + (2 * i * dx),
-    --         h = 30 + (2 * i * dx),
-    --         color = (i == 1) and RED or ((i >= 2) and GREY or LIGHTGREY),
-    --         filled = true,
-    --         rounded = 18,
-    --         visible = function() return fan >= i end
-    --     })
-    -- end
-
-    -- bArm:rectangle({x=10, y=10, w=140, h=30, color=RED, filled=true, rounded=18, visible=function() return fan>=1 end})
-    -- bArm:label({text="Arm", x=0, y=0, font=FS.FONT_6, color=WHITE})
     bArm:label({x=22, y=11, text=function() return wgt.values.is_arm and "ARM" or "Not Armed" end, font=FS.FONT_12 ,
         color=function()
             if wgt.options.guiStyle==2 then
@@ -450,14 +431,6 @@ build_ui_fancy = function(wgt)
             end
         end
     })
-
-    -- failed to arm flags
-    pMain:build({{type="box", x=150, y=45, visible=function() return wgt.values.arm_fail end,
-        children={
-            {type="rectangle", x=0, y=0, w=280, h=150, color=RED, filled=true, rounded=8, opacity=245},
-            {type="label", text=function() return wgt.values.arm_disable_flags_txt end, x=10, y=0, font=FS.FONT_8, color=WHITE},
-        }
-    }})
 
     -- status bar
     local bStatusBar = pMain:box({x=0, y=wgt.zone.h-20})
@@ -471,21 +444,32 @@ build_ui_fancy = function(wgt)
     -- bStatusBar:label({x=390, y=2, text=rf2.LUA_VERSION, font=FS.FONT_6, color=WHITE})
 
     -- image
-    local isizew=160
-    local isizeh=80
-    local bImageArea = pMain:box({x=LCD_W-isizew, y=0, w=isizew, h=isizeh})
-    -- local bRect = bImageArea:rectangle({x=0, y=0, w=isizew, h=isizeh, thickness=4, rounded=15, filled=false, color=GREY})
+    local isizew=150
+    local isizeh=100
+    local bImageArea = pMain:box({x=330, y=5})
+    bImageArea:rectangle({x=0, y=0, w=isizew, h=isizeh, thickness=4, rounded=15, filled=false, color=GREY})
     local bImg = bImageArea:box({})
     wgt.values.img_box_1 = bImg
     wgt.values.img_replacment_area1 = bImageArea
 
+    -- craft name
+    local bCraftName = pMain:box({x=330, y=60})
+    bCraftName:rectangle({x=10, y=20, w=isizew-20, h=20, filled=true, rounded=8, color=DARKGREY, opacity=200})
+    bCraftName:label({text=function() return wgt.values.craft_name end,  x=15, y=20, font=FS.FONT_8 ,color=txtColor})
+
+    -- failed to arm flags
+    local bFailedArmFlags = pMain:box({x=100, y=25, visible=function() return wgt.values.arm_fail end})
+    bFailedArmFlags:rectangle({x=0, y=0, w=280, h=150, color=RED, filled=true, rounded=8, opacity=245})
+    bFailedArmFlags:label({text=function()
+        return string.format("%s (%s)", wgt.values.arm_disable_flags_txt, wgt.values.arm_fail)
+    end, x=10, y=0, font=FS.FONT_8, color=WHITE})
+
     -- no connection
     local bNoConn = lvgl.box({x=330, y=10, visible=function() return wgt.is_connected==false end})
-    -- bNoConn:label({x=5,  y=10,   text="Rotorflight Dashboard", font=FS.FONT_12, color=WHITE})
-    bNoConn:rectangle({x=5, y=10, w=isizew, h=isizeh, rounded=15, filled=true, color=BLACK, opacity=250})
+    bNoConn:rectangle({x=5, y=10, w=isizew-10, h=isizeh-10, rounded=15, filled=true, color=BLACK, opacity=250})
     bNoConn:label({x=10, y=80, text=function() return wgt.not_connected_error end , font=FS.FONT_8, color=WHITE})
     bNoConn:image({x=30, y=0, w=90, h=90, file=baseDir.."widgets/img/no_connection_wr.png"})
-    -- lvgl.line({color=WHITE, thickness=3, pts={{480/2,5}, {480/2,200}} })
+
 end
 
 build_ui_modern = function(wgt)
@@ -500,15 +484,12 @@ build_ui_modern = function(wgt)
 
     -- global
     lvgl.rectangle({x=0, y=0, w=LCD_W, h=LCD_H, color=lcd.RGB(0x111111), filled=true})
-    lvgl.label({text=string.format("%s-LVGL", wgt.options.guiStyle), x=LCD_W-30, y=0, font=FS.FONT_6, color=GREY})
-    local pMain = lvgl.box({x=0, y=0, name="panelMain"
-        -- , visible=function() return wgt.is_connected end
-    })
+    local pMain = lvgl.box({x=0, y=0})
 
     -- pid profile (bank)
     pMain:build({{type="box", x=30+280, y=150,
         children={
-            {type="label", text="Bank", x=0, y=40, font=FS.FONT_6, color=titleGreyColor},
+            {type="label", text="Profile", x=0, y=40, font=FS.FONT_6, color=titleGreyColor},
             {type="label", text=function() return wgt.values.profile_id_str end , x=6, y=0, font=FS.FONT_16 ,color=txtColor},
         }
     }})
@@ -612,14 +593,13 @@ build_ui_modern = function(wgt)
     bStatusBar:label({x=380, y=2, text="VenbS & Shmuely", font=FS.FONT_6, color=YELLOW})
 
     -- image
-    local isizew=150 --200
-    local isizeh=100 --140
-    local bImageArea = pMain:box({x=330, y=5})--, w=isizew, h=isizeh})
-    local bRect = bImageArea:rectangle({x=0, y=0, w=isizew, h=isizeh, thickness=4, rounded=15, filled=false, color=GREY})
+    local isizew=150
+    local isizeh=100
+    local bImageArea = pMain:box({x=330, y=5})
+    bImageArea:rectangle({x=0, y=0, w=isizew, h=isizeh, thickness=4, rounded=15, filled=false, color=GREY})
     local bImg = bImageArea:box({})
     wgt.values.img_box_2 = bImg
     wgt.values.img_replacment_area2 = bImageArea
-
 
     -- craft name
     local bCraftName = pMain:box({x=330, y=60})
@@ -627,19 +607,15 @@ build_ui_modern = function(wgt)
     bCraftName:label({text=function() return wgt.values.craft_name end,  x=15, y=20, font=FS.FONT_8 ,color=txtColor})
 
     -- failed to arm flags
-    local bNoConn = pMain:box({x=150, y=45, visible=function() return wgt.values.arm_fail end})
-    bNoConn:rectangle({x=0, y=0, w=280, h=150, color=RED, filled=true, rounded=8, opacity=245})
-    bNoConn:label({text=function() return wgt.values.arm_disable_flags_txt end, x=10, y=0, font=FS.FONT_8, color=WHITE})
-
+    local bFailedArmFlags = pMain:box({x=100, y=25, visible=function() return wgt.values.arm_fail end})
+    bFailedArmFlags:rectangle({x=0, y=0, w=280, h=150, color=RED, filled=true, rounded=8, opacity=245})
+    bFailedArmFlags:label({text=function() return wgt.values.arm_disable_flags_txt end, x=10, y=0, font=FS.FONT_8, color=WHITE})
 
     -- no connection
     local bNoConn = lvgl.box({x=330, y=10, visible=function() return wgt.is_connected==false end})
-    -- bNoConn:label({x=100,  y=5,   text="Rotorflight Dashboard", font=FS.FONT_12, color=WHITE})
-    local isizew=150-10
-    local isizeh=90-10
-    bNoConn:rectangle({x=5, y=10, w=isizew, h=isizeh, rounded=15, filled=true, color=BLACK, opacity=250})
-    bNoConn:label({x=10, y=100, text=function() return wgt.not_connected_error end , font=FS.FONT_8, color=WHITE})
-    bNoConn:image({x=30, y=2, w=90, h=90, file=baseDir.."widgets/img/no_connection_wr.png"})
+    bNoConn:rectangle({x=5, y=10, w=isizew-10, h=isizeh-10, rounded=15, filled=true, color=BLACK, opacity=250})
+    bNoConn:label({x=10, y=80, text=function() return wgt.not_connected_error end , font=FS.FONT_8, color=WHITE})
+    bNoConn:image({x=30, y=0, w=90, h=90, file=baseDir.."widgets/img/no_connection_wr.png"})
 
 end
 
@@ -682,7 +658,7 @@ local function build_ui_appmode(wgt)
             children={
                 { type="label", x=5, y=0,
                     text=function()
-                        return string.format("Bank: %s", wgt.values.profile_id_str)
+                        return string.format("Profile: %s", wgt.values.profile_id_str)
                     end,
                     font=BOLD
                 },
@@ -700,7 +676,7 @@ local function build_ui_appmode(wgt)
     local pTitles = {"P", "I", "D", "F"}
     local axisTitles = {"roll", "pitch", "yaw"}
     for i=1, 6 do
-        bPidList:label({x=80+(i-1)*60, y=0, text="bank " .. i, visible=function() return i<=3 or wgt.show_3_or_6==1 end})
+        bPidList:label({x=80+(i-1)*60, y=0, text="Profile " .. i, visible=function() return i<=3 or wgt.show_3_or_6==1 end})
         bPidList:vline({x=80-10 +(i-1)*60, y=5, h=360, w=1, color=lineColor, visible=function() return i<=3 or wgt.show_3_or_6==1 end})--, rounded=true})
     end
 
@@ -986,31 +962,27 @@ local function updateImage(wgt)
         log("updateImage - model changed, %s --> %s", wgt.values.img_last_name, imageName)
 
         -- image replacment
+        local isizew=150
+        local isizeh=100
 
-        -- local isizew=200
-        -- local isizeh=140 --???
-        -- wgt.values.img_replacment_area2:clear()
-        -- wgt.values.img_replacment_area2:image({file=imageName, x=0, y=0, w=isizew, h=isizeh, fill=false})
-
-        local isizew=160
-        local isizeh=80 --???
         if wgt.values.img_box_1 then
             wgt.values.img_box_1:clear()
-            wgt.values.img_box_1 = wgt.values.img_replacment_area1:box({})
             wgt.values.img_box_1:image({file=imageName, x=0, y=0, w=isizew, h=isizeh, fill=false})
         end
-
-        local isizew=150-10--200
-        local isizeh=90 --140 --???
         if wgt.values.img_box_2 then
             wgt.values.img_box_2:clear()
-            wgt.values.img_box_2 = wgt.values.img_replacment_area2:box({})
-            wgt.values.img_box_2:image({file=imageName, x=5, y=0, w=isizew, h=isizeh, fill=false})
+            wgt.values.img_box_2:image({file=imageName, x=0, y=0, w=isizew, h=isizeh, fill=false})
         end
 
         wgt.values.img_last_name = imageName
         wgt.values.img_craft_name_for_image = newCraftName
     end
+
+end
+
+local function updateOnNoConnection()
+    wgt.values.arm_disable_flags_txt = ""
+    wgt.values.arm_fail = false
 
 end
 
@@ -1051,11 +1023,13 @@ local function refresh(wgt, event, touchState)
 
     wgt.is_connected, wgt.not_connected_error = false, "no RF2_Server widget found"
     if rf2fc == nil then
+        updateOnNoConnection()
         return
     else
         if rf2fc.mspCacheTools ~= nil then
             wgt.is_connected, wgt.not_connected_error = rf2fc.mspCacheTools.isCacheAvailable()
             if wgt.is_connected==false then
+                updateOnNoConnection()
                 return
             end
         end
